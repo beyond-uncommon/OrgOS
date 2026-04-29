@@ -1,4 +1,4 @@
-import { prisma, PendingActionStatus } from "@orgos/db";
+import { prisma, PendingActionStatus, EditRequestStatus } from "@orgos/db";
 
 export interface PendingActionRow {
   id: string;
@@ -35,7 +35,7 @@ export async function getPendingActionsForDepartment(
 export async function getPendingEditRequests(departmentId: string) {
   return prisma.entryEditRequest.findMany({
     where: {
-      status: "PENDING",
+      status: EditRequestStatus.PENDING,
       entry: { departmentId },
     },
     orderBy: { createdAt: "asc" },

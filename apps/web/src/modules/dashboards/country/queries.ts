@@ -1,4 +1,4 @@
-import { prisma } from "@orgos/db";
+import { prisma, Role, PeriodType } from "@orgos/db";
 
 export async function getCountryDashboardData() {
   const orgRoot = await prisma.department.findFirst({
@@ -35,11 +35,11 @@ export async function getCountryDashboardData() {
 
   const [programManagers, snapshots, studentCount] = await Promise.all([
     prisma.user.findMany({
-      where: { departmentId: { in: programIds }, role: "PROGRAM_MANAGER" },
+      where: { departmentId: { in: programIds }, role: Role.PROGRAM_MANAGER },
       select: { departmentId: true, name: true },
     }),
     prisma.dashboardSnapshot.findMany({
-      where: { departmentId: { in: hubIds }, periodType: "DAILY" },
+      where: { departmentId: { in: hubIds }, periodType: PeriodType.DAILY },
       orderBy: { periodStart: "desc" },
     }),
     prisma.student.count({ where: { enrollmentStatus: "ACTIVE" } }),

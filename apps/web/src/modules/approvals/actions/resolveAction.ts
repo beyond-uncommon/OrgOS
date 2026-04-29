@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@orgos/db";
+import { prisma, PendingActionStatus } from "@orgos/db";
 import type { ActionResult } from "@orgos/utils";
 
 export async function approvePendingAction(
@@ -10,7 +10,7 @@ export async function approvePendingAction(
   try {
     await prisma.pendingAction.update({
       where: { id: pendingActionId },
-      data: { status: "APPROVED", approvedById: approverId || null },
+      data: { status: PendingActionStatus.APPROVED, approvedById: approverId || null },
     });
     return { success: true, data: undefined };
   } catch (err) {
@@ -25,7 +25,7 @@ export async function rejectPendingAction(
   try {
     await prisma.pendingAction.update({
       where: { id: pendingActionId },
-      data: { status: "REJECTED", rejectedById: rejectorId || null },
+      data: { status: PendingActionStatus.REJECTED, rejectedById: rejectorId || null },
     });
     return { success: true, data: undefined };
   } catch (err) {

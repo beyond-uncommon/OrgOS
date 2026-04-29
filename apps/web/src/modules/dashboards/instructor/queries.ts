@@ -1,4 +1,4 @@
-import { prisma } from "@orgos/db";
+import { prisma, Role } from "@orgos/db";
 
 export async function getInstructorProfile(userId: string) {
   return prisma.user.findUnique({
@@ -52,7 +52,7 @@ export async function getStudentsForInstructor(instructorId: string) {
 
 export async function getDepartmentInstructors(departmentId: string) {
   return prisma.user.findMany({
-    where: { departmentId, role: "INSTRUCTOR" },
+    where: { departmentId, role: Role.INSTRUCTOR },
     select: { id: true, name: true, email: true },
     orderBy: { name: "asc" },
   });

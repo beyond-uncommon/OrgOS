@@ -1,4 +1,4 @@
-import { prisma } from "@orgos/db";
+import { prisma, Role, PeriodType } from "@orgos/db";
 
 export async function getBootcampDashboardData(bootcampDepartmentId: string) {
   const hubs = await prisma.department.findMany({
@@ -9,11 +9,11 @@ export async function getBootcampDashboardData(bootcampDepartmentId: string) {
 
   const [hubLeads, snapshots, lastEntries, alerts] = await Promise.all([
     prisma.user.findMany({
-      where: { departmentId: { in: hubIdList }, role: "HUB_LEAD" },
+      where: { departmentId: { in: hubIdList }, role: Role.HUB_LEAD },
       select: { departmentId: true, name: true },
     }),
     prisma.dashboardSnapshot.findMany({
-      where: { departmentId: { in: hubIdList }, periodType: "DAILY" },
+      where: { departmentId: { in: hubIdList }, periodType: PeriodType.DAILY },
       orderBy: { periodStart: "desc" },
     }),
     prisma.dailyEntry.findMany({

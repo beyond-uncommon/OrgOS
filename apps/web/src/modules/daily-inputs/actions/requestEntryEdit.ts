@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@orgos/db";
+import { prisma, EditRequestStatus } from "@orgos/db";
 import type { ActionResult } from "@orgos/utils";
 
 export async function requestEntryEdit(
@@ -9,7 +9,7 @@ export async function requestEntryEdit(
   note: string,
 ): Promise<ActionResult<{ id: string }>> {
   const existing = await prisma.entryEditRequest.findFirst({
-    where: { entryId, requestedById, status: "PENDING" },
+    where: { entryId, requestedById, status: EditRequestStatus.PENDING },
   });
   if (existing) {
     return { success: false, error: "A pending edit request already exists for this entry." };
