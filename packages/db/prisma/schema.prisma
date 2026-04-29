@@ -1,0 +1,504 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  INSTRUCTOR
+  HUB_LEAD
+  BOOTCAMP_MANAGER
+  PROGRAM_MANAGER
+  COUNTRY_DIRECTOR
+  HEAD_OF_DESIGN
+  HEAD_OF_DEVELOPMENT
+  YOUTH_CODING_MANAGER
+  TEACHER_TRAINING_COORDINATOR
+  CAREER_DEVELOPMENT_OFFICER
+  REGIONAL_HUB_LEAD
+  SAFEGUARDING
+  M_AND_E
+  MARKETING_COMMS_MANAGER
+  BUSINESS_DEVELOPMENT_MANAGER
+  BUSINESS_DEVELOPMENT_ASSOCIATE
+  HR_OFFICER
+  FINANCE_ADMIN_OFFICER
+  HEAD_OF_OPERATIONS
+  ADMIN
+}
+
+enum EntryStatus {
+  SUBMITTED
+  PROCESSING
+  COMPLETE
+  FLAGGED
+}
+
+enum MetricSource {
+  STRUCTURED
+  NARRATIVE
+  INFERRED
+}
+
+enum ReportStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  PUBLISHED
+}
+
+enum AlertType {
+  MISSING_ENTRY
+  ANOMALY
+  INCONSISTENCY
+  RISK
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum InterventionStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum SnapshotScope {
+  INDIVIDUAL
+  DEPARTMENT
+  PROGRAM
+  ORGANIZATION
+}
+
+enum PeriodType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+}
+
+// ─── Core Entities ────────────────────────────────────────────────────────────
+
+model Student {
+  id               String  @id @default(cuid())
+  name             String
+  departmentId     String
+  instructorId     String
+  enrollmentStatus String  @default("ACTIVE") // ACTIVE | DROPPED | GRADUATED
+
+  department       Department @relation(fields: [departmentId], references: [id])
+  instructor       User       @relation("InstructorStudents", fields: [instructorId], references: [id])
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([instructorId])
+  @@index([departmentId])
+}
+
+model Department {
+  id                 String      @id @default(cuid())
+  name               String
+  parentDepartmentId String?
+  parent             Department? @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id])
+  children           Department[] @relation("DepartmentHierarchy")
+
+  users              User[]
+  students           Student[]
+  dailyEntries       DailyEntry[]
+  weeklyReports      WeeklyReport[]
+  monthlyReports     MonthlyReport[]
+  dashboardSnapshots DashboardSnapshot[]
+  pendingActions     PendingAction[]
+  outcomeRecords     OutcomeRecord[]
+  boardPolicies      BoardPolicy[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentDepartmentId])
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String
+  role         Role
+  departmentId String
+
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  dailyEntries          DailyEntry[]
+  reviewedWeeklyReports WeeklyReport[]  @relation("WeeklyReportReviewer")
+  reviewedMonthlyReports MonthlyReport[] @relation("MonthlyReportReviewer")
+  resolvedAlerts        Alert[]         @relation("AlertResolver")
+  assignedInterventions Intervention[]  @relation("InterventionAssignee")
+  approvedActions       PendingAction[] @relation("ActionApprover")
+  rejectedActions       PendingAction[] @relation("ActionRejector")
+  setPolicies           BoardPolicy[]   @relation("PolicySetter")
+  students              Student[]       @relation("InstructorStudents")
+  editRequestsMade      EntryEditRequest[] @relation("EditRequester")
+  editRequestsReviewed  EntryEditRequest[] @relation("EditReviewer")
+  entryComments         EntryComment[]     @relation("EntryCommentAuthor")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([departmentId])
+  @@index([role])
+}
+
+// ─── Source of Truth ──────────────────────────────────────────────────────────
+
+model DailyEntry {
+  id               String      @id @default(cuid())
+  userId           String
+  departmentId     String
+  date             DateTime    @db.Date
+  attendanceStatus   String
+  outputCompleted    String
+  blockers           String
+  engagementNotes    String
+  quickSummary       String
+  status             EntryStatus @default(SUBMITTED)
+
+  // Structured hub metrics (optional — captured directly in form)
+  totalStudents      Int?
+  studentsPresent    Int?
+  dropouts           Int?
+  maleStudents       Int?
+  femaleStudents     Int?
+  otherGender        Int?
+  averageAge         Float?
+  mentorshipPairs    Int?
+  engagementScore      String?   // HIGH / MEDIUM / LOW
+  reportType           String    @default("DAILY") // DAILY | INCIDENT | SESSION
+  guestsVisited        Boolean   @default(false)
+  guestNotes           String?
+  studentsInvolvedIds  Json?     // string[] of Student.id — populated for INCIDENT reports
+  dropoutStudentIds    Json?     // string[] of Student.id — populated for DAILY reports
+  dropoutReasons       Json?     // Record<studentId, string> — per-student dropout reason
+
+  user             User        @relation(fields: [userId], references: [id])
+  department       Department  @relation(fields: [departmentId], references: [id])
+  extractedMetrics ExtractedMetric[]
+  alerts           Alert[]
+  editRequests     EntryEditRequest[]
+  comments         EntryComment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // One entry per user per day
+  @@unique([userId, date])
+  @@index([departmentId, date])
+  @@index([status])
+  @@index([date])
+}
+
+enum EditRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+model EntryEditRequest {
+  id            String            @id @default(cuid())
+  entryId       String
+  requestedById String
+  note          String            @default("")
+  status        EditRequestStatus @default(PENDING)
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewNote    String?
+
+  entry         DailyEntry        @relation(fields: [entryId], references: [id])
+  requestedBy   User              @relation("EditRequester", fields: [requestedById], references: [id])
+  reviewedBy    User?             @relation("EditReviewer", fields: [reviewedById], references: [id])
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([entryId])
+  @@index([status])
+  @@index([requestedById])
+}
+
+model EntryComment {
+  id        String     @id @default(cuid())
+  entryId   String
+  authorId  String
+  body      String
+
+  entry     DailyEntry @relation(fields: [entryId], references: [id])
+  author    User       @relation("EntryCommentAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([entryId])
+  @@index([authorId])
+}
+
+// ─── Intelligence Layer ───────────────────────────────────────────────────────
+
+model ExtractedMetric {
+  id            String       @id @default(cuid())
+  entryId       String
+  metricKey     String
+  metricValue   Json
+  confidence    Float
+  source        MetricSource
+  flagged       Boolean      @default(false)
+  promptVersion String
+
+  entry         DailyEntry   @relation(fields: [entryId], references: [id])
+
+  createdAt     DateTime     @default(now())
+
+  @@index([entryId])
+  @@index([metricKey])
+  @@index([flagged])
+}
+
+// ─── Generated Reports ────────────────────────────────────────────────────────
+
+model WeeklyReport {
+  id               String       @id @default(cuid())
+  weekStart        DateTime     @db.Date
+  weekEnd          DateTime     @db.Date
+  departmentId     String
+  status           ReportStatus @default(DRAFT)
+  generatedContent Json
+  generatedMetrics Json
+  risks            Json
+  originalContent  Json         // preserved — never mutated after generation
+  editLog          Json         @default("[]")
+  promptVersion    String
+  reviewedById     String?
+  reviewedAt       DateTime?
+
+  department       Department   @relation(fields: [departmentId], references: [id])
+  reviewedBy       User?        @relation("WeeklyReportReviewer", fields: [reviewedById], references: [id])
+  alerts           Alert[]
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([departmentId, weekStart])
+  @@index([status])
+  @@index([departmentId])
+}
+
+model MonthlyReport {
+  id               String       @id @default(cuid())
+  periodMonth      Int
+  periodYear       Int
+  departmentId     String
+  status           ReportStatus @default(DRAFT)
+  generatedContent Json
+  generatedMetrics Json
+  originalContent  Json         // preserved — never mutated after generation
+  editLog          Json         @default("[]")
+  promptVersion    String
+  reviewedById     String?
+  reviewedAt       DateTime?
+
+  department       Department   @relation(fields: [departmentId], references: [id])
+  reviewedBy       User?        @relation("MonthlyReportReviewer", fields: [reviewedById], references: [id])
+  alerts           Alert[]
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([departmentId, periodYear, periodMonth])
+  @@index([status])
+  @@index([departmentId])
+}
+
+// ─── Alerts & Interventions ───────────────────────────────────────────────────
+
+model Alert {
+  id              String     @id @default(cuid())
+  type            AlertType
+  severity        Severity
+  resolved        Boolean    @default(false)
+  resolvedById    String?
+  entryId         String?
+  weeklyReportId  String?
+  monthlyReportId String?
+  metadata        Json?      // AnomalyMetadata — written once at creation, never updated
+
+  entry           DailyEntry?    @relation(fields: [entryId], references: [id])
+  weeklyReport    WeeklyReport?  @relation(fields: [weeklyReportId], references: [id])
+  monthlyReport   MonthlyReport? @relation(fields: [monthlyReportId], references: [id])
+  resolvedBy      User?          @relation("AlertResolver", fields: [resolvedById], references: [id])
+  interventions   Intervention[]
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([severity, resolved])
+  @@index([type])
+  @@index([entryId])
+}
+
+model Intervention {
+  id           String             @id @default(cuid())
+  alertId      String
+  issueType    String
+  severity     Severity
+  assignedToId String
+  status       InterventionStatus @default(OPEN)
+  notes        String             @default("")
+  resolvedAt   DateTime?
+
+  alert        Alert              @relation(fields: [alertId], references: [id])
+  assignedTo   User               @relation("InterventionAssignee", fields: [assignedToId], references: [id])
+
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([status])
+  @@index([assignedToId])
+  @@index([alertId])
+}
+
+// ─── Autonomous Action Layer (v3) ────────────────────────────────────────────
+
+enum PendingActionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  EXECUTED
+}
+
+enum ActionExecutionMode {
+  AUTO
+  HUMAN_APPROVAL
+  SYSTEM
+}
+
+model PendingAction {
+  id             String              @id @default(cuid())
+  departmentId   String
+  actionType     String
+  target         String
+  priority       Int                 // 0 = P0 (critical), 3 = P3 (opportunity)
+  urgency        String              // "IMMEDIATE" | "24H" | "7D"
+  executionMode  ActionExecutionMode
+  rationale      String
+  payload        Json                // structured action data for executor
+  status         PendingActionStatus @default(PENDING)
+  approvedById   String?
+  rejectedById   String?
+  expiresAt      DateTime
+  executedAt     DateTime?
+  forecastRunId  String              // links back to the v2 forecast that triggered this
+
+  department     Department          @relation(fields: [departmentId], references: [id])
+  approvedBy     User?               @relation("ActionApprover",  fields: [approvedById],  references: [id])
+  rejectedBy     User?               @relation("ActionRejector",  fields: [rejectedById],  references: [id])
+
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([status, expiresAt])
+  @@index([departmentId, status])
+  @@index([priority, status])
+}
+
+model OutcomeRecord {
+  id              String   @id @default(cuid())
+  departmentId    String
+  forecastRunId   String
+  metricKey       String
+  predictedValue  Float
+  actualValue     Float
+  forecastHorizon String   // "7D" | "14D" | "30D"
+  measuredAt      DateTime
+
+  department      Department @relation(fields: [departmentId], references: [id])
+
+  createdAt       DateTime   @default(now())
+
+  @@index([departmentId, forecastHorizon])
+  @@index([forecastRunId])
+}
+
+// ─── Governance Layer ─────────────────────────────────────────────────────────
+
+enum AutomationLevel {
+  FULL
+  LIMITED
+  LOCKED
+}
+
+model BoardPolicy {
+  id                  String          @id @default(cuid())
+  departmentId        String?         // null = org-wide policy
+  automationLevel     AutomationLevel @default(LIMITED)
+  maxAutoRiskThreshold Float          @default(0.6) // likelihood threshold above which AUTO is blocked
+  allowedAutoActions  Json            @default("[]") // string[] of actionTypes permitted for AUTO
+  forbiddenActions    Json            @default("[]") // string[] of actionTypes never permitted
+  active              Boolean         @default(true)
+  effectiveFrom       DateTime        @default(now())
+  setByUserId         String
+
+  department          Department?     @relation(fields: [departmentId], references: [id])
+  setBy               User            @relation("PolicySetter", fields: [setByUserId], references: [id])
+
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([active, departmentId])
+}
+
+model GovernanceAuditRecord {
+  id               String   @id @default(cuid())
+  actionPlanId     String   // PendingAction.id or ephemeral plan identifier
+  actionType       String
+  departmentId     String
+  decision         String   // "ALLOWED" | "BLOCKED" | "ESCALATED"
+  requiredLevel    String?  // OrgNode level required for approval
+  reason           String
+  boardPolicyId    String?  // which policy ruled (null if default)
+  automationLevel  String   // snapshot of AutomationLevel at decision time
+  forecastRunId    String
+  sourceLikelihood Float    // likelihood from the ForwardRiskSignal — required for policy simulation replay
+
+  createdAt       DateTime @default(now())
+
+  @@index([departmentId, createdAt])
+  @@index([actionPlanId])
+  @@index([forecastRunId])
+}
+
+// ─── Dashboards ───────────────────────────────────────────────────────────────
+
+model DashboardSnapshot {
+  id           String        @id @default(cuid())
+  departmentId String?
+  scope        SnapshotScope
+  periodType   PeriodType
+  periodStart  DateTime      @db.Date
+  data         Json
+
+  department   Department?   @relation(fields: [departmentId], references: [id])
+
+  createdAt    DateTime      @default(now())
+
+  @@index([scope, periodType, periodStart])
+  @@index([departmentId])
+}

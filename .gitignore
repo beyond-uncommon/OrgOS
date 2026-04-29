@@ -1,0 +1,33 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# Next.js
+.next
+out
+
+# build outputs
+dist
+build
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.*.local
+
+# prisma
+prisma/migrations/dev.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editors
+.vscode
+.idea
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

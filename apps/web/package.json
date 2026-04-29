@@ -1,0 +1,41 @@
+{
+  "name": "web",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@emotion/cache": "^11.13.1",
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0",
+    "@mui/icons-material": "^6.5.0",
+    "@mui/material": "^6.1.0",
+    "@mui/x-charts": "^7.14.0",
+    "@mui/x-data-grid": "^7.14.0",
+    "@orgos/dashboard-engine": "workspace:*",
+    "@orgos/db": "workspace:*",
+    "@orgos/ingestion-engine": "workspace:*",
+    "@orgos/insight-engine": "workspace:*",
+    "@orgos/intervention-engine": "workspace:*",
+    "@orgos/metric-extraction": "workspace:*",
+    "@orgos/report-generator": "workspace:*",
+    "@orgos/shared-types": "workspace:*",
+    "@orgos/ui": "workspace:*",
+    "@orgos/utils": "workspace:*",
+    "next": "^14.2.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5.4.5"
+  }
+}

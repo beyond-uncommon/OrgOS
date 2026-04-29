@@ -1,0 +1,16 @@
+{
+  "name": "@orgos/intervention-engine",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@orgos/db": "workspace:*",
+    "@orgos/shared-types": "workspace:*",
+    "@orgos/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
