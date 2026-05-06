@@ -11,6 +11,8 @@ export default async function MyStudentsPage() {
     <MyStudentsClient
       user={{ name: user.name, role: user.role }}
       students={students}
+      instructorId={user.id}
+      departmentId={user.departmentId ?? ""}
     />
   );
 }
