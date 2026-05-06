@@ -179,10 +179,9 @@ export async function getYCOrgSummary(allHubDepartmentIds: string[]) {
   return {
     totalUniqueStudents: uniqueStudents.length,
     sessionsThisMonth: currentMonthSessions,
-    genderBreakdown: genderBreakdown.map(g => ({
-      gender: g.gender,
-      count: g._count,
-    })),
+    genderBreakdown: genderBreakdown
+      .filter((g): g is typeof g & { gender: string } => g.gender !== null)
+      .map(g => ({ gender: g.gender, count: g._count })),
     schoolCount: schoolCount.length,
   };
 }
