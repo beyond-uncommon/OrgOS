@@ -25,7 +25,10 @@ export function StudentRegisterRow({ index, value, onChange }: StudentRegisterRo
         type="number"
         size="small"
         value={value.age ?? ""}
-        onChange={e => onChange(index, "age", Number(e.target.value))}
+        onChange={e => {
+          const v = Number(e.target.value);
+          if (!isNaN(v)) onChange(index, "age", v);
+        }}
         sx={{ width: 70 }}
         required
       />

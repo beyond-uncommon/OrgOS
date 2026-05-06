@@ -77,7 +77,9 @@ export function SessionForm({
     const result = await submitSession(userId, departmentId, {
       phase1: { date, lessonNumber, projectName, school, community, instructorIds },
       attendance,
-      newStudents: newStudents.length > 0 ? newStudents : undefined,
+      newStudents: newStudents.filter(s => s.name && s.name.trim().length > 0).length > 0
+        ? newStudents.filter(s => s.name && s.name.trim().length > 0)
+        : undefined,
     });
 
     setLoading(false);
@@ -218,18 +220,6 @@ export function SessionForm({
               </Box>
             );
           })}
-          <Button
-            size="small"
-            onClick={() =>
-              setAttendance(prev => [
-                ...prev,
-                { studentId: `new-${Date.now()}`, present: true, projectStatus: "NOT_COMPLETE" },
-              ])
-            }
-            sx={{ mt: 1 }}
-          >
-            + Add Student
-          </Button>
         </Box>
       )}
 
