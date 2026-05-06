@@ -9,7 +9,7 @@ import {
   PendingActionStatus,
   ActionExecutionMode,
   ProjectStatus,
-} from "@prisma/client";
+} from "../../../apps/web/.prisma/client";
 
 const prisma = new PrismaClient();
 
