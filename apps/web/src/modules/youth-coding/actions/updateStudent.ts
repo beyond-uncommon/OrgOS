@@ -2,13 +2,18 @@
 
 import { prisma } from "@orgos/db";
 import type { ActionResult } from "@orgos/utils";
+import { getSessionUser } from "@/lib/auth/session";
 import { studentRegistrationSchema } from "../schema";
 
 export async function updateStudent(
   studentId: string,
-  callerUserId: string,
   formData: unknown,
 ): Promise<ActionResult<{ id: string }>> {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) {
+    return { success: false, error: "Not authenticated." };
+  }
+
   const parsed = studentRegistrationSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false, error: parsed.error.message };
@@ -23,7 +28,7 @@ export async function updateStudent(
     return { success: false, error: "Student not found." };
   }
 
-  if (existing.instructorId !== callerUserId) {
+  if (existing.instructorId !== sessionUser.id) {
     return { success: false, error: "Not authorized to edit this student." };
   }
 
@@ -33,7 +38,6 @@ export async function updateStudent(
       data: parsed.data,
       select: { id: true },
     });
-
     return { success: true, data: student };
   } catch (e: unknown) {
     const err = e as Error;

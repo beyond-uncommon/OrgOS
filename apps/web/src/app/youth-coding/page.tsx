@@ -8,6 +8,7 @@ const HUB_LEAD_AND_ABOVE = ["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "
 export default async function YCMasterDatabasePage() {
   const user = await getSessionUser();
   if (!user || !HUB_LEAD_AND_ABOVE.includes(user.role)) redirect("/login");
-  const students = await getYCMasterList();
+  const isHubScoped = user.role === "HUB_LEAD";
+  const students = await getYCMasterList(isHubScoped ? user.departmentId : undefined);
   return <YCMasterClient user={{ name: user.name, role: user.role }} students={students} />;
 }

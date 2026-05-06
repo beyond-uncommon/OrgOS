@@ -45,6 +45,7 @@ export function YCMasterClient({
 
   function exportCSV() {
     const header = "Name,Age,Gender,School,Grade,Community,Hub,Coordinator,Sessions,Completion";
+    const esc = (v: string | number | null) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const rows = filtered.map(s => {
       const total = s.sessionAttendance.length;
       const complete = s.sessionAttendance.filter(a => a.projectStatus === "COMPLETE").length;
@@ -52,7 +53,7 @@ export function YCMasterClient({
       return [
         s.name, s.age ?? "", s.gender ?? "", s.school ?? "", s.grade ?? "",
         s.community ?? "", s.department.name, s.instructor.name, total, `${rate}%`,
-      ].join(",");
+      ].map(esc).join(",");
     });
     const csv = [header, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });

@@ -21,7 +21,7 @@ export async function getSessionsForUser(userId: string) {
 
 export async function getDepartmentUsersForSession(departmentId: string) {
   return prisma.user.findMany({
-    where: { departmentId },
+    where: { departmentId, role: { in: [Role.INSTRUCTOR, Role.HUB_LEAD] } },
     select: { id: true, name: true, role: true },
     orderBy: { name: "asc" },
   });
@@ -187,9 +187,13 @@ export async function getYCOrgSummary(allHubDepartmentIds: string[]) {
   };
 }
 
-export async function getYCMasterList() {
+export async function getYCMasterList(departmentId?: string) {
   return prisma.student.findMany({
-    where: { enrollmentStatus: "ACTIVE" },
+    where: {
+      enrollmentStatus: "ACTIVE",
+      age: { not: null },
+      ...(departmentId ? { departmentId } : {}),
+    },
     include: {
       department: { select: { id: true, name: true } },
       instructor: { select: { id: true, name: true } },

@@ -9,7 +9,7 @@ export default async function MyStudentsPage() {
   const students = await getStudentsForUser(user.id);
   return (
     <MyStudentsClient
-      user={{ id: user.id, name: user.name, role: user.role }}
+      user={{ name: user.name, role: user.role }}
       students={students}
     />
   );

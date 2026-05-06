@@ -24,7 +24,7 @@ export function MyStudentsClient({
   user,
   students: initial,
 }: {
-  user: { id: string; name: string; role: string };
+  user: { name: string; role: string };
   students: Student[];
 }) {
   const [students, setStudents] = useState(initial);
@@ -42,7 +42,7 @@ export function MyStudentsClient({
   }
 
   async function saveEdit(id: string) {
-    const result = await updateStudent(id, user.id, draft);
+    const result = await updateStudent(id, draft);
     if (result.success) {
       setStudents(prev => prev.map(s => s.id === id ? { ...s, ...draft } : s));
       setEditing(null);
