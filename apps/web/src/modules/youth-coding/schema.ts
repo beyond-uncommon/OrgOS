@@ -33,3 +33,4 @@ export const sessionSubmissionSchema = z.object({
 export type StudentRegistrationInput = z.infer<typeof studentRegistrationSchema>;
 export type SessionSubmissionInput = z.infer<typeof sessionSubmissionSchema>;
 export type AttendanceRecord = z.infer<typeof attendanceRecordSchema>;
+export type SessionPhase1Input = z.infer<typeof sessionPhase1Schema>;
