@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import {
   Box, Container, Typography, Table, TableHead, TableRow, TableCell,
-  TableBody, Select, MenuItem, FormControl, InputLabel, Button,
+  TableBody, Select, MenuItem, FormControl, InputLabel, Button, Tabs, Tab,
 } from "@mui/material";
 import { UserBar } from "@/components/UserBar";
 
@@ -49,6 +49,7 @@ export function YCMasterClient({
   students: YCStudent[];
   metrics: YCMetrics;
 }) {
+  const [tab, setTab] = useState(0);
   const [hubFilter, setHubFilter] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
   const [genderFilter, setGenderFilter] = useState("");
@@ -101,102 +102,122 @@ export function YCMasterClient({
       </Box>
 
       <Container maxWidth="xl" sx={{ py: 6 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
+        <Typography variant="h4" sx={{ mb: 1, letterSpacing: "-0.02em" }}>Youth Coding</Typography>
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
+          {students.length} registered students
+        </Typography>
+
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 4, borderBottom: "1px solid", borderColor: "divider" }}>
+          <Tab label="Metrics" />
+          <Tab label="Master Database" />
+        </Tabs>
+
+        {/* ── Metrics tab ── */}
+        {tab === 0 && (
           <Box>
-            <Typography variant="h4" sx={{ mb: 1, letterSpacing: "-0.02em" }}>
-              Youth Coding Master Database
+            <Typography variant="h6" sx={{ mb: 3, color: "text.secondary", fontWeight: 400 }}>
+              Programme Overview — {new Date().getFullYear()}
             </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 5 }}>
+              <MetricCard label="Registered (all time)" value={metrics.totalRegistered} />
+              <MetricCard label={`Taught YTD`} value={metrics.taughtYTD} />
+              <MetricCard label="Avg Age" value={metrics.averageAge} />
+              <MetricCard label="Schools" value={metrics.schoolCount} />
+              <MetricCard label="Communities" value={metrics.communityCount} />
+            </Box>
+            <Typography variant="subtitle2" sx={{ mb: 2, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "0.7rem" }}>
+              Gender Breakdown
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              {metrics.genderBreakdown.map(g => (
+                <MetricCard key={g.gender} label={g.gender === "M" ? "Male" : g.gender === "F" ? "Female" : "Other"} value={g.count} />
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        {/* ── Master Database tab ── */}
+        {tab === 1 && (
+          <Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel>Hub</InputLabel>
+                  <Select value={hubFilter} label="Hub" onChange={e => setHubFilter(e.target.value)}>
+                    <MenuItem value="">All</MenuItem>
+                    {hubs.map(h => <MenuItem key={h} value={h}>{h}</MenuItem>)}
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                  <InputLabel>School</InputLabel>
+                  <Select value={schoolFilter} label="School" onChange={e => setSchoolFilter(e.target.value)}>
+                    <MenuItem value="">All</MenuItem>
+                    {schools.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 100 }}>
+                  <InputLabel>Gender</InputLabel>
+                  <Select value={genderFilter} label="Gender" onChange={e => setGenderFilter(e.target.value)}>
+                    <MenuItem value="">All</MenuItem>
+                    <MenuItem value="M">M</MenuItem>
+                    <MenuItem value="F">F</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 110 }}>
+                  <InputLabel>Grade</InputLabel>
+                  <Select value={gradeFilter} label="Grade" onChange={e => setGradeFilter(e.target.value)}>
+                    <MenuItem value="">All</MenuItem>
+                    {grades.map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Box>
+              <Button variant="outlined" size="small" onClick={exportCSV}>Export CSV</Button>
+            </Box>
+
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
               {filtered.length} of {students.length} students
             </Typography>
-          </Box>
-          <Button variant="outlined" size="small" onClick={exportCSV}>
-            Export CSV
-          </Button>
-        </Box>
 
-        {/* Metrics row */}
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4 }}>
-          <MetricCard label="Registered (all time)" value={metrics.totalRegistered} />
-          <MetricCard label={`Taught YTD (${new Date().getFullYear()})`} value={metrics.taughtYTD} />
-          <MetricCard label="Avg Age" value={metrics.averageAge} />
-          <MetricCard label="Schools" value={metrics.schoolCount} />
-          <MetricCard label="Communities" value={metrics.communityCount} />
-          {metrics.genderBreakdown.map(g => (
-            <MetricCard key={g.gender} label={g.gender} value={g.count} />
-          ))}
-        </Box>
-
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>Hub</InputLabel>
-            <Select value={hubFilter} label="Hub" onChange={e => setHubFilter(e.target.value)}>
-              <MenuItem value="">All</MenuItem>
-              {hubs.map(h => <MenuItem key={h} value={h}>{h}</MenuItem>)}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>School</InputLabel>
-            <Select value={schoolFilter} label="School" onChange={e => setSchoolFilter(e.target.value)}>
-              <MenuItem value="">All</MenuItem>
-              {schools.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 100 }}>
-            <InputLabel>Gender</InputLabel>
-            <Select value={genderFilter} label="Gender" onChange={e => setGenderFilter(e.target.value)}>
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="M">M</MenuItem>
-              <MenuItem value="F">F</MenuItem>
-              <MenuItem value="Other">Other</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>Grade</InputLabel>
-            <Select value={gradeFilter} label="Grade" onChange={e => setGradeFilter(e.target.value)}>
-              <MenuItem value="">All</MenuItem>
-              {grades.map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
-            </Select>
-          </FormControl>
-        </Box>
-
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Age</TableCell>
-              <TableCell>Gender</TableCell>
-              <TableCell>School</TableCell>
-              <TableCell>Grade</TableCell>
-              <TableCell>Community</TableCell>
-              <TableCell>Hub</TableCell>
-              <TableCell>Coordinator</TableCell>
-              <TableCell>Sessions</TableCell>
-              <TableCell>Completion</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filtered.map(s => {
-              const total = s.sessionAttendance.length;
-              const complete = s.sessionAttendance.filter(a => a.projectStatus === "COMPLETE").length;
-              const rate = total > 0 ? Math.round((complete / total) * 100) : 0;
-              return (
-                <TableRow key={s.id}>
-                  <TableCell>{s.name}</TableCell>
-                  <TableCell>{s.age ?? "—"}</TableCell>
-                  <TableCell>{s.gender ?? "—"}</TableCell>
-                  <TableCell>{s.school ?? "—"}</TableCell>
-                  <TableCell>{s.grade ?? "—"}</TableCell>
-                  <TableCell>{s.community ?? "—"}</TableCell>
-                  <TableCell>{s.department.name}</TableCell>
-                  <TableCell>{s.instructor.name}</TableCell>
-                  <TableCell>{total}</TableCell>
-                  <TableCell>{rate}%</TableCell>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Age</TableCell>
+                  <TableCell>Gender</TableCell>
+                  <TableCell>School</TableCell>
+                  <TableCell>Grade</TableCell>
+                  <TableCell>Community</TableCell>
+                  <TableCell>Hub</TableCell>
+                  <TableCell>Coordinator</TableCell>
+                  <TableCell>Sessions</TableCell>
+                  <TableCell>Completion</TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              </TableHead>
+              <TableBody>
+                {filtered.map(s => {
+                  const total = s.sessionAttendance.length;
+                  const complete = s.sessionAttendance.filter(a => a.projectStatus === "COMPLETE").length;
+                  const rate = total > 0 ? Math.round((complete / total) * 100) : 0;
+                  return (
+                    <TableRow key={s.id}>
+                      <TableCell>{s.name}</TableCell>
+                      <TableCell>{s.age ?? "—"}</TableCell>
+                      <TableCell>{s.gender ?? "—"}</TableCell>
+                      <TableCell>{s.school ?? "—"}</TableCell>
+                      <TableCell>{s.grade ?? "—"}</TableCell>
+                      <TableCell>{s.community ?? "—"}</TableCell>
+                      <TableCell>{s.department.name}</TableCell>
+                      <TableCell>{s.instructor.name}</TableCell>
+                      <TableCell>{total}</TableCell>
+                      <TableCell>{rate}%</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Box>
+        )}
       </Container>
     </Box>
   );
