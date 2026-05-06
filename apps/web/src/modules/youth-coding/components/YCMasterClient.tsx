@@ -20,12 +20,34 @@ interface YCStudent {
   sessionAttendance: { projectStatus: string }[];
 }
 
+interface YCMetrics {
+  totalRegistered: number;
+  taughtYTD: number;
+  averageAge: number;
+  genderBreakdown: { gender: string; count: number }[];
+  communityCount: number;
+  schoolCount: number;
+}
+
+function MetricCard({ label, value }: { label: string; value: string | number }) {
+  return (
+    <Box sx={{ p: 2.5, border: "1px solid", borderColor: "divider", borderRadius: 2, minWidth: 140 }}>
+      <Typography variant="h4" sx={{ fontWeight: 600, letterSpacing: "-0.02em", color: "primary.main" }}>
+        {value}
+      </Typography>
+      <Typography variant="caption" sx={{ color: "text.secondary" }}>{label}</Typography>
+    </Box>
+  );
+}
+
 export function YCMasterClient({
   user,
   students,
+  metrics,
 }: {
   user: { name: string; role: string };
   students: YCStudent[];
+  metrics: YCMetrics;
 }) {
   const [hubFilter, setHubFilter] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
@@ -91,6 +113,18 @@ export function YCMasterClient({
           <Button variant="outlined" size="small" onClick={exportCSV}>
             Export CSV
           </Button>
+        </Box>
+
+        {/* Metrics row */}
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4 }}>
+          <MetricCard label="Registered (all time)" value={metrics.totalRegistered} />
+          <MetricCard label={`Taught YTD (${new Date().getFullYear()})`} value={metrics.taughtYTD} />
+          <MetricCard label="Avg Age" value={metrics.averageAge} />
+          <MetricCard label="Schools" value={metrics.schoolCount} />
+          <MetricCard label="Communities" value={metrics.communityCount} />
+          {metrics.genderBreakdown.map(g => (
+            <MetricCard key={g.gender} label={g.gender} value={g.count} />
+          ))}
         </Box>
 
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>

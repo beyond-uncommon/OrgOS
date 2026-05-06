@@ -186,6 +186,37 @@ export async function getYCOrgSummary(allHubDepartmentIds: string[]) {
   };
 }
 
+export async function getYCManagerMetrics(departmentId?: string) {
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
+  const scopeFilter = departmentId ? { departmentId } : {};
+  const baseFilter = { age: { not: null as null }, enrollmentStatus: "ACTIVE", ...scopeFilter };
+
+  const [allStudents, ytdAttendance, genderGroups, communities, schools] = await Promise.all([
+    prisma.student.findMany({ where: baseFilter, select: { id: true, age: true } }),
+    prisma.sessionAttendance.findMany({
+      where: { session: { date: { gte: yearStart }, ...scopeFilter }, student: { age: { not: null } } },
+      select: { studentId: true },
+      distinct: ["studentId"],
+    }),
+    prisma.student.groupBy({ by: ["gender"], where: { ...baseFilter, gender: { not: null } }, _count: true }),
+    prisma.student.findMany({ where: { ...baseFilter, community: { not: null } }, select: { community: true }, distinct: ["community"] }),
+    prisma.student.findMany({ where: { ...baseFilter, school: { not: null } }, select: { school: true }, distinct: ["school"] }),
+  ]);
+
+  const totalAge = allStudents.reduce((sum, s) => sum + (s.age ?? 0), 0);
+
+  return {
+    totalRegistered: allStudents.length,
+    taughtYTD: ytdAttendance.length,
+    averageAge: allStudents.length ? Math.round((totalAge / allStudents.length) * 10) / 10 : 0,
+    genderBreakdown: genderGroups
+      .filter((g): g is typeof g & { gender: string } => g.gender !== null)
+      .map(g => ({ gender: g.gender, count: g._count })),
+    communityCount: communities.length,
+    schoolCount: schools.length,
+  };
+}
+
 export async function getYCMasterList(departmentId?: string) {
   return prisma.student.findMany({
     where: {
