@@ -3,11 +3,13 @@
 import { useState } from "react";
 import {
   Box, Container, Typography, Table, TableHead, TableRow, TableCell,
-  TableBody, TextField, IconButton, Select, MenuItem,
+  TableBody, TextField, IconButton, Select, MenuItem, Button, Stack,
 } from "@mui/material";
 import Link from "next/link";
 import { updateStudent } from "../actions/updateStudent";
 import { UserBar } from "@/components/UserBar";
+import { AddStudentDialog } from "./AddStudentDialog";
+import { CsvUploadDialog } from "./CsvUploadDialog";
 
 interface Student {
   id: string;
@@ -23,14 +25,20 @@ interface Student {
 export function MyStudentsClient({
   user,
   students: initial,
+  instructorId,
+  departmentId,
 }: {
   user: { name: string; role: string };
   students: Student[];
+  instructorId: string;
+  departmentId: string;
 }) {
   const [students, setStudents] = useState(initial);
   const [filter, setFilter] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Student>>({});
+  const [addOpen, setAddOpen] = useState(false);
+  const [csvOpen, setCsvOpen] = useState(false);
 
   const filtered = students.filter(
     s => !filter || (s.school ?? "").toLowerCase().includes(filter.toLowerCase()),
@@ -47,6 +55,15 @@ export function MyStudentsClient({
       setStudents(prev => prev.map(s => s.id === id ? { ...s, ...draft } : s));
       setEditing(null);
     }
+  }
+
+  function handleStudentCreated(student: Student) {
+    setStudents(prev => [...prev, student].sort((a, b) => a.name.localeCompare(b.name)));
+  }
+
+  function handleCsvComplete(created: number) {
+    // Reload page to get fresh data after bulk import
+    if (created > 0) window.location.reload();
   }
 
   return (
@@ -68,10 +85,22 @@ export function MyStudentsClient({
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 6 }}>
-        <Typography variant="h4" sx={{ mb: 1, letterSpacing: "-0.02em" }}>My Students</Typography>
-        <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-          {students.length} registered youth coding students
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 3 }}>
+          <Box>
+            <Typography variant="h4" sx={{ mb: 0.5, letterSpacing: "-0.02em" }}>My Students</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              {students.length} registered youth coding student{students.length !== 1 ? "s" : ""}
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" size="small" onClick={() => setCsvOpen(true)}>
+              Bulk Upload CSV
+            </Button>
+            <Button variant="contained" size="small" onClick={() => setAddOpen(true)}>
+              + Add Student
+            </Button>
+          </Stack>
+        </Box>
 
         <TextField
           label="Filter by school"
@@ -84,7 +113,7 @@ export function MyStudentsClient({
         {filtered.length === 0 ? (
           <Typography sx={{ color: "text.secondary" }}>
             {students.length === 0
-              ? "No students registered yet. Submit your first session to register students."
+              ? "No students registered yet. Add a student or submit a session to get started."
               : "No students match the current filter."}
           </Typography>
         ) : (
@@ -153,6 +182,22 @@ export function MyStudentsClient({
           </Table>
         )}
       </Container>
+
+      <AddStudentDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        instructorId={instructorId}
+        departmentId={departmentId}
+        onCreated={handleStudentCreated}
+      />
+
+      <CsvUploadDialog
+        open={csvOpen}
+        onClose={() => setCsvOpen(false)}
+        instructorId={instructorId}
+        departmentId={departmentId}
+        onComplete={handleCsvComplete}
+      />
     </Box>
   );
 }

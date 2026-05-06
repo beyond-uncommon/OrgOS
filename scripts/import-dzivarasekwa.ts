@@ -165,24 +165,25 @@ async function main() {
     });
   }
 
-  // Create Student records
-  const studentRecords = await Promise.all(
-    rows.map(r =>
-      prisma.student.create({
-        data: {
-          name: `${r.firstName} ${r.lastName}`.trim(),
-          departmentId: HUB_ID,
-          instructorId: coordinator!.id,
-          enrollmentStatus: "ACTIVE",
-          age: r.age,
-          gender: r.gender,
-          school: r.school,
-          grade: r.grade,
-          community: r.community,
-        },
-      })
-    )
-  );
+  // Create Student records (sequential to avoid connection pool exhaustion)
+  const studentRecords = [];
+  for (const r of rows) {
+    const s = await prisma.student.create({
+      data: {
+        name: `${r.firstName} ${r.lastName}`.trim(),
+        departmentId: HUB_ID,
+        instructorId: coordinator!.id,
+        enrollmentStatus: "ACTIVE",
+        age: r.age,
+        gender: r.gender,
+        school: r.school,
+        grade: r.grade,
+        community: r.community,
+      },
+    });
+    studentRecords.push(s);
+  }
+  console.log(`  Students inserted: ${studentRecords.length}`);
 
   // Build unique sessions: "dateStr|lessonNumber"
   const sessionMap = new Map<string, { date: Date; lessonNumber: number; projectName: string }>();
