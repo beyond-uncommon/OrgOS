@@ -14,11 +14,17 @@ model Student {
   name             String
   departmentId     String
   instructorId     String
-  enrollmentStatus String     @default("ACTIVE")
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  department       Department @relation(fields: [departmentId], references: [id])
-  instructor       User       @relation("InstructorStudents", fields: [instructorId], references: [id])
+  enrollmentStatus  String     @default("ACTIVE")
+  age               Int?
+  gender            String?
+  school            String?
+  grade             String?
+  community         String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  department        Department @relation(fields: [departmentId], references: [id])
+  instructor        User       @relation("InstructorStudents", fields: [instructorId], references: [id])
+  sessionAttendance SessionAttendance[]
 
   @@index([instructorId])
   @@index([departmentId])
@@ -39,8 +45,9 @@ model Department {
   outcomeRecords     OutcomeRecord[]
   pendingActions     PendingAction[]
   students           Student[]
-  users              User[]
-  weeklyReports      WeeklyReport[]
+  users               User[]
+  weeklyReports       WeeklyReport[]
+  youthCodingSessions YouthCodingSession[]
 
   @@index([parentDepartmentId])
 }
@@ -66,6 +73,7 @@ model User {
   students               Student[]          @relation("InstructorStudents")
   department             Department         @relation(fields: [departmentId], references: [id])
   reviewedWeeklyReports  WeeklyReport[]     @relation("WeeklyReportReviewer")
+  submittedSessions      YouthCodingSession[] @relation("SessionSubmitter")
 
   @@index([departmentId])
   @@index([role])
@@ -315,6 +323,41 @@ model BoardPolicy {
   @@index([active, departmentId])
 }
 
+model YouthCodingSession {
+  id            String              @id @default(cuid())
+  date          DateTime            @db.Date
+  lessonNumber  Int
+  projectName   String
+  school        String
+  community     String
+  departmentId  String
+  submittedById String
+  instructorIds Json
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  department    Department          @relation(fields: [departmentId], references: [id])
+  submittedBy   User                @relation("SessionSubmitter", fields: [submittedById], references: [id])
+  attendance    SessionAttendance[]
+
+  @@index([departmentId, date])
+  @@index([submittedById])
+}
+
+model SessionAttendance {
+  id            String             @id @default(cuid())
+  sessionId     String
+  studentId     String
+  projectStatus ProjectStatus      @default(NOT_COMPLETE)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  session       YouthCodingSession @relation(fields: [sessionId], references: [id])
+  student       Student            @relation(fields: [studentId], references: [id])
+
+  @@unique([sessionId, studentId])
+  @@index([sessionId])
+  @@index([studentId])
+}
+
 model GovernanceAuditRecord {
   id               String   @id @default(cuid())
   actionPlanId     String
@@ -369,6 +412,7 @@ enum Role {
   FINANCE_ADMIN_OFFICER
   HEAD_OF_OPERATIONS
   ADMIN
+  STUDENT
 }
 
 enum EntryStatus {
@@ -450,4 +494,9 @@ enum AutomationLevel {
   FULL
   LIMITED
   LOCKED
+}
+
+enum ProjectStatus {
+  COMPLETE
+  NOT_COMPLETE
 }
