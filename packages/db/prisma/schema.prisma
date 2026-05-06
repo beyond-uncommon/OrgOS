@@ -10,20 +10,22 @@ datasource db {
 }
 
 model Student {
-  id               String     @id @default(cuid())
-  name             String
-  departmentId     String
-  instructorId     String
-  enrollmentStatus  String     @default("ACTIVE")
+  id                String              @id @default(cuid())
+  name              String
+  departmentId      String
+  instructorId      String
+  enrollmentStatus  String              @default("ACTIVE")
+  // Demographic fields — populated for youth coding students (created via STUDENT role).
+  // Nullable for backward compatibility with pre-existing bootcamp Student rows.
   age               Int?
   gender            String?
   school            String?
   grade             String?
   community         String?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-  department        Department @relation(fields: [departmentId], references: [id])
-  instructor        User       @relation("InstructorStudents", fields: [instructorId], references: [id])
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  department        Department          @relation(fields: [departmentId], references: [id])
+  instructor        User                @relation("InstructorStudents", fields: [instructorId], references: [id])
   sessionAttendance SessionAttendance[]
 
   @@index([instructorId])
@@ -31,20 +33,20 @@ model Student {
 }
 
 model Department {
-  id                 String              @id @default(cuid())
-  name               String
-  parentDepartmentId String?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  boardPolicies      BoardPolicy[]
-  dailyEntries       DailyEntry[]
-  dashboardSnapshots DashboardSnapshot[]
-  parent             Department?         @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id])
-  children           Department[]        @relation("DepartmentHierarchy")
-  monthlyReports     MonthlyReport[]
-  outcomeRecords     OutcomeRecord[]
-  pendingActions     PendingAction[]
-  students           Student[]
+  id                  String               @id @default(cuid())
+  name                String
+  parentDepartmentId  String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  boardPolicies       BoardPolicy[]
+  dailyEntries        DailyEntry[]
+  dashboardSnapshots  DashboardSnapshot[]
+  parent              Department?          @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id])
+  children            Department[]         @relation("DepartmentHierarchy")
+  monthlyReports      MonthlyReport[]
+  outcomeRecords      OutcomeRecord[]
+  pendingActions      PendingAction[]
+  students            Student[]
   users               User[]
   weeklyReports       WeeklyReport[]
   youthCodingSessions YouthCodingSession[]
@@ -53,26 +55,26 @@ model Department {
 }
 
 model User {
-  id                     String             @id @default(cuid())
-  email                  String             @unique
+  id                     String               @id @default(cuid())
+  email                  String               @unique
   name                   String
   role                   Role
   departmentId           String
-  createdAt              DateTime           @default(now())
-  updatedAt              DateTime           @updatedAt
-  resolvedAlerts         Alert[]            @relation("AlertResolver")
-  setPolicies            BoardPolicy[]      @relation("PolicySetter")
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  resolvedAlerts         Alert[]              @relation("AlertResolver")
+  setPolicies            BoardPolicy[]        @relation("PolicySetter")
   dailyEntries           DailyEntry[]
-  entryComments          EntryComment[]     @relation("EntryCommentAuthor")
-  editRequestsMade       EntryEditRequest[] @relation("EditRequester")
-  editRequestsReviewed   EntryEditRequest[] @relation("EditReviewer")
-  assignedInterventions  Intervention[]     @relation("InterventionAssignee")
-  reviewedMonthlyReports MonthlyReport[]    @relation("MonthlyReportReviewer")
-  approvedActions        PendingAction[]    @relation("ActionApprover")
-  rejectedActions        PendingAction[]    @relation("ActionRejector")
-  students               Student[]          @relation("InstructorStudents")
-  department             Department         @relation(fields: [departmentId], references: [id])
-  reviewedWeeklyReports  WeeklyReport[]     @relation("WeeklyReportReviewer")
+  entryComments          EntryComment[]       @relation("EntryCommentAuthor")
+  editRequestsMade       EntryEditRequest[]   @relation("EditRequester")
+  editRequestsReviewed   EntryEditRequest[]   @relation("EditReviewer")
+  assignedInterventions  Intervention[]       @relation("InterventionAssignee")
+  reviewedMonthlyReports MonthlyReport[]      @relation("MonthlyReportReviewer")
+  approvedActions        PendingAction[]      @relation("ActionApprover")
+  rejectedActions        PendingAction[]      @relation("ActionRejector")
+  students               Student[]            @relation("InstructorStudents")
+  department             Department           @relation(fields: [departmentId], references: [id])
+  reviewedWeeklyReports  WeeklyReport[]       @relation("WeeklyReportReviewer")
   submittedSessions      YouthCodingSession[] @relation("SessionSubmitter")
 
   @@index([departmentId])
