@@ -15,6 +15,9 @@ const DEMO_PASSWORDS: Record<string, string> = {
   "bootcamp@uncommon.org":     "bootcamp",
   "ycmanager@uncommon.org":    "ycmanager",
   "program@uncommon.org":      "program",
+  "pm.yc@uncommon.org":        "pm.yc",
+  "pm.outreach@uncommon.org":  "pm.outreach",
+  "pm.tt@uncommon.org":        "pm.tt",
   "director@uncommon.org":     "director",
   "admin@uncommon.org":        "admin",
 };

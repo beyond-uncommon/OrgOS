@@ -7,7 +7,8 @@ const DEMO_ACCOUNTS = [
   { role: "Hub Lead",             email: "hublead@uncommon.org",      password: "hublead",    access: "Hub dashboard, instructor list, approval queue" },
   { role: "Bootcamp Manager",     email: "bootcamp@uncommon.org",     password: "bootcamp",   access: "All hubs in bootcamp, rolled-up metrics" },
   { role: "YC Manager",           email: "ycmanager@uncommon.org",    password: "ycmanager",  access: "Youth coding master database, all-hub student roster" },
-  { role: "Program Manager",      email: "program@uncommon.org",      password: "program",    access: "All bootcamps in program, trends" },
+  { role: "Program Manager (Bootcamp)", email: "program@uncommon.org",       password: "program",    access: "Bootcamp Program — all bootcamps, rolled-up metrics" },
+  { role: "Program Manager (YC)",       email: "pm.yc@uncommon.org",         password: "pm.yc",      access: "Youth Coding Program overview" },
   { role: "Country Director",     email: "director@uncommon.org",     password: "director",   access: "Org-wide KPIs, all programs, alerts" },
   { role: "Admin",                email: "admin@uncommon.org",        password: "admin",      access: "Full access" },
 ];

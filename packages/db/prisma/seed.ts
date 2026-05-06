@@ -238,12 +238,22 @@ async function main() {
     data: { id: "org-root", name: "Uncommon" },
   });
 
-  const program = await prisma.department.create({
-    data: { id: "prog-design", name: "Design Program", parentDepartmentId: org.id },
+  // Four programs under the org
+  const progYC = await prisma.department.create({
+    data: { id: "prog-yc", name: "Youth Coding Program", parentDepartmentId: org.id },
+  });
+  const progOutreach = await prisma.department.create({
+    data: { id: "prog-outreach", name: "Outreach Program", parentDepartmentId: org.id },
+  });
+  const progBootcamp = await prisma.department.create({
+    data: { id: "prog-bootcamp", name: "Bootcamp Program", parentDepartmentId: org.id },
+  });
+  const progTeacherTraining = await prisma.department.create({
+    data: { id: "prog-teacher-training", name: "Teacher Training Program", parentDepartmentId: org.id },
   });
 
   const bootcamp = await prisma.department.create({
-    data: { id: "boot-design", name: "Design Bootcamp", parentDepartmentId: program.id },
+    data: { id: "boot-design", name: "Design Bootcamp", parentDepartmentId: progBootcamp.id },
   });
 
   const hub1 = await prisma.department.create({
@@ -261,12 +271,22 @@ async function main() {
     data: { email: "director@uncommon.org", name: "Morgan Ellis", role: Role.COUNTRY_DIRECTOR, departmentId: org.id },
   });
 
+  // One Program Manager per program
   await prisma.user.create({
-    data: { email: "program@uncommon.org", name: "Sam Torres", role: Role.PROGRAM_MANAGER, departmentId: program.id },
+    data: { email: "pm.yc@uncommon.org", name: "Amara Diallo", role: Role.PROGRAM_MANAGER, departmentId: progYC.id },
+  });
+  await prisma.user.create({
+    data: { email: "pm.outreach@uncommon.org", name: "Kwame Asante", role: Role.PROGRAM_MANAGER, departmentId: progOutreach.id },
+  });
+  await prisma.user.create({
+    data: { email: "program@uncommon.org", name: "Sam Torres", role: Role.PROGRAM_MANAGER, departmentId: progBootcamp.id },
+  });
+  await prisma.user.create({
+    data: { email: "pm.tt@uncommon.org", name: "Nadia Osei", role: Role.PROGRAM_MANAGER, departmentId: progTeacherTraining.id },
   });
 
   await prisma.user.create({
-    data: { email: "ycmanager@uncommon.org", name: "Dana Osei", role: Role.YOUTH_CODING_MANAGER, departmentId: program.id },
+    data: { email: "ycmanager@uncommon.org", name: "Dana Osei", role: Role.YOUTH_CODING_MANAGER, departmentId: progYC.id },
   });
 
   await prisma.user.create({
@@ -507,12 +527,13 @@ async function main() {
   await seedYouthCoding([hub1, hub2, hub3]);
 
   console.log("✓ Seed complete.");
-  console.log(`  Org tree: ${org.name} → ${program.name} → ${bootcamp.name} → ${hub1.name} / ${hub2.name} / ${hub3.name}`);
+  console.log(`  Org tree: ${org.name} → [${progYC.name} | ${progOutreach.name} | ${progBootcamp.name} | ${progTeacherTraining.name}]`);
+  console.log(`  Bootcamp path: ${progBootcamp.name} → ${bootcamp.name} → ${hub1.name} / ${hub2.name} / ${hub3.name}`);
   console.log(`  Instructors: ${allInstructors.length} (5 per hub)`);
   console.log(`  Demo instructor: ${demoInstructor.email}`);
   console.log(`  Hub Lead (Hub 1): hublead@uncommon.org / hublead`);
   console.log(`  Bootcamp Manager: bootcamp@uncommon.org / bootcamp`);
-  console.log(`  Program Manager: program@uncommon.org / program`);
+  console.log(`  Program Managers: program@uncommon.org (Bootcamp) / pm.yc@uncommon.org (YC) / pm.outreach@uncommon.org (Outreach) / pm.tt@uncommon.org (Teacher Training)`);
   console.log(`  Country Director: director@uncommon.org / director`);
   console.log(`  YC Students: yc.student1@uncommon.org / yc.student2@uncommon.org / yc.student3@uncommon.org`);
   console.log(`  YC Manager: ycmanager@uncommon.org`);
