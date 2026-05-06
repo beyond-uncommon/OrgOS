@@ -8,8 +8,12 @@ import { redirectByRole } from "./redirect-by-role";
 
 const DEMO_PASSWORDS: Record<string, string> = {
   "alex.rivera@uncommon.org":  "instructor",
+  "yc.student1@uncommon.org":  "yc.student1",
+  "yc.student2@uncommon.org":  "yc.student2",
+  "yc.student3@uncommon.org":  "yc.student3",
   "hublead@uncommon.org":      "hublead",
   "bootcamp@uncommon.org":     "bootcamp",
+  "ycmanager@uncommon.org":    "ycmanager",
   "program@uncommon.org":      "program",
   "director@uncommon.org":     "director",
   "admin@uncommon.org":        "admin",
