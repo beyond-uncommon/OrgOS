@@ -266,6 +266,10 @@ async function main() {
   });
 
   await prisma.user.create({
+    data: { email: "ycmanager@uncommon.org", name: "Dana Osei", role: Role.YOUTH_CODING_MANAGER, departmentId: program.id },
+  });
+
+  await prisma.user.create({
     data: { email: "bootcamp@uncommon.org", name: "Casey Morgan", role: Role.BOOTCAMP_MANAGER, departmentId: bootcamp.id },
   });
 
@@ -511,6 +515,7 @@ async function main() {
   console.log(`  Program Manager: program@uncommon.org / program`);
   console.log(`  Country Director: director@uncommon.org / director`);
   console.log(`  YC Students: yc.student1@uncommon.org / yc.student2@uncommon.org / yc.student3@uncommon.org`);
+  console.log(`  YC Manager: ycmanager@uncommon.org`);
 }
 
 main()

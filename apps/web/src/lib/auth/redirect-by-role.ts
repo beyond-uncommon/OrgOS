@@ -18,6 +18,8 @@ export function redirectByRole(
       redirect(`/country`);
     case "STUDENT":
       redirect(`/student`);
+    case "YOUTH_CODING_MANAGER":
+      redirect(`/youth-coding`);
     default:
       redirect(`/coming-soon`);
   }

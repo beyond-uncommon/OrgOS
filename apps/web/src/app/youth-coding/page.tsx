@@ -3,7 +3,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { getYCMasterList } from "@/modules/youth-coding/queries";
 import { YCMasterClient } from "@/modules/youth-coding/components/YCMasterClient";
 
-const HUB_LEAD_AND_ABOVE = ["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "COUNTRY_DIRECTOR", "ADMIN"];
+const HUB_LEAD_AND_ABOVE = ["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "COUNTRY_DIRECTOR", "ADMIN", "YOUTH_CODING_MANAGER"];
 
 export default async function YCMasterDatabasePage() {
   const user = await getSessionUser();
