@@ -9,6 +9,8 @@ import {
   getInstructorAlerts,
   getStudentsForInstructor,
 } from "@/modules/dashboards/instructor/queries";
+import { getYCInstructorSummary } from "@/modules/youth-coding/queries";
+import { YCPanel } from "@/modules/youth-coding/components/YCPanel";
 import { InstructorTabs } from "@/modules/dashboards/instructor/InstructorTabs";
 import { UserBar } from "@/components/UserBar";
 import { RequestEditButton } from "@/modules/daily-inputs/components/RequestEditButton";
@@ -82,11 +84,12 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default async function InstructorPage({ params }: Props) {
   const { departmentId, userId } = await params;
 
-  const [instructor, entries, rawAlerts, students] = await Promise.all([
+  const [instructor, entries, rawAlerts, students, ycSummary] = await Promise.all([
     getInstructorProfile(userId),
     getInstructorDailyEntries(userId, 30),
     getInstructorAlerts(userId),
     getStudentsForInstructor(userId),
+    getYCInstructorSummary(userId),
   ]);
 
   const studentMap = new Map(students.map((s) => [s.id, s.name]));
@@ -209,6 +212,14 @@ export default async function InstructorPage({ params }: Props) {
           />
         </Grid>
       </Grid>
+
+      {/* Youth Coding Panel */}
+      <YCPanel
+        uniqueStudents={ycSummary.uniqueYouthStudents}
+        sessionCount={ycSummary.sessionCount}
+        completionRate={ycSummary.completionRate}
+        label="Youth Coding (This Week)"
+      />
 
       {/* Gender breakdown */}
       {genderBreakdown && (

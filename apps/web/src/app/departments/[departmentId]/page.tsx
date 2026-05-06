@@ -4,6 +4,8 @@ import Link from "next/link";
 import { getDepartmentDashboard, getRecentAlerts, getWeeklyInsightSnapshot } from "@/modules/dashboards/queries";
 import { getPendingActionsForDepartment, getApproverByEmail } from "@/modules/approvals/queries";
 import { getDepartmentInstructors } from "@/modules/dashboards/instructor/queries";
+import { getYCHubSummary } from "@/modules/youth-coding/queries";
+import { YCPanel } from "@/modules/youth-coding/components/YCPanel";
 import { getSessionUser } from "@/lib/auth/session";
 import { prisma } from "@orgos/db";
 import { UserBar } from "@/components/UserBar";
@@ -55,7 +57,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
     else redirect("/coming-soon");
   }
 
-  const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, approver, instructors, dept] = await Promise.all([
+  const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, approver, instructors, dept, ycSummary] = await Promise.all([
     getDepartmentDashboard(departmentId),
     getWeeklyInsightSnapshot(departmentId),
     getRecentAlerts(departmentId),
@@ -63,6 +65,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
     getApproverByEmail(DEMO_APPROVER_EMAIL),
     getDepartmentInstructors(departmentId),
     prisma.department.findUnique({ where: { id: departmentId }, select: { name: true } }),
+    getYCHubSummary(departmentId),
   ]);
 
   const metricsData = dailySnapshot?.data as Record<string, unknown[]> | null;
@@ -189,6 +192,17 @@ export default async function DepartmentDashboardPage({ params }: Props) {
                   <EmptyState message="No weekly insight generated yet. Submit entries to trigger analysis." />
                 )}
               </Box>
+            </Box>
+
+            {/* Youth Coding Panel */}
+            <Box sx={{ mt: 4 }}>
+              <SectionLabel>Youth Coding</SectionLabel>
+              <YCPanel
+                uniqueStudents={ycSummary.uniqueStudentCount}
+                sessionCount={ycSummary.sessionsThisMonth}
+                completionRate={ycSummary.completionRate}
+                schoolBreakdown={Object.entries(ycSummary.schoolBreakdown).map(([school, count]) => ({ school, count }))}
+              />
             </Box>
 
             {/* Instructors */}

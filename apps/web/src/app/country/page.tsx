@@ -6,6 +6,8 @@ import { getSessionUser } from "@/lib/auth/session";
 import { UserBar } from "@/components/UserBar";
 import { RisksPanel } from "@/modules/dashboards/department/RisksPanel";
 import { getCountryDashboardData } from "@/modules/dashboards/country/queries";
+import { getYCOrgSummary } from "@/modules/youth-coding/queries";
+import { YCPanel } from "@/modules/youth-coding/components/YCPanel";
 import type { Alert } from "@orgos/db";
 
 function latestMetric(data: Record<string, unknown[]> | null, key: string): number | null {
@@ -31,6 +33,9 @@ export default async function CountryDirectorPage() {
 
   const { programs, programManagers, bootcamps, hubs, latestSnapshot, alerts, studentCount } =
     await getCountryDashboardData();
+
+  const allHubIds = hubs.map((h: { id: string }) => h.id);
+  const ycSummary = await getYCOrgSummary(allHubIds);
 
   const managerMap = new Map(programManagers.map((m) => [m.departmentId, m.name]));
 
@@ -77,6 +82,14 @@ export default async function CountryDirectorPage() {
             </Grid>
           ))}
         </Grid>
+
+        <YCPanel
+          uniqueStudents={ycSummary.totalUniqueStudents}
+          sessionCount={ycSummary.sessionsThisMonth}
+          genderBreakdown={ycSummary.genderBreakdown}
+          schoolCount={ycSummary.schoolCount}
+          label="Youth Coding — Org Wide"
+        />
 
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>

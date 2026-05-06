@@ -7,6 +7,8 @@ import { getSessionUser } from "@/lib/auth/session";
 import { UserBar } from "@/components/UserBar";
 import { RisksPanel } from "@/modules/dashboards/department/RisksPanel";
 import { getBootcampDashboardData } from "@/modules/dashboards/bootcamp/queries";
+import { getYCBootcampAggregate } from "@/modules/youth-coding/queries";
+import { YCPanel } from "@/modules/youth-coding/components/YCPanel";
 import type { Alert } from "@orgos/db";
 
 interface Props {
@@ -61,6 +63,9 @@ export default async function BootcampDashboardPage({ params }: Props) {
   const { hubs, hubLeads, latestSnapshot, lastEntries, alerts } =
     await getBootcampDashboardData(departmentId);
 
+  const hubIds = (hubs as { id: string }[]).map((h) => h.id);
+  const ycSummary = await getYCBootcampAggregate(hubIds);
+
   const hubLeadMap = new Map(hubLeads.map((hl) => [hl.departmentId, hl.name]));
   const lastEntryMap = new Map(lastEntries.map((e) => [e.departmentId, e.date]));
 
@@ -111,6 +116,11 @@ export default async function BootcampDashboardPage({ params }: Props) {
             </Grid>
           ))}
         </Grid>
+
+        <YCPanel
+          uniqueStudents={ycSummary.uniqueStudentCount}
+          sessionCount={ycSummary.sessionsThisMonth}
+        />
 
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>
