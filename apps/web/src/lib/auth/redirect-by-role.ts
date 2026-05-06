@@ -16,6 +16,8 @@ export function redirectByRole(
       redirect(`/programs/${departmentId}`);
     case "COUNTRY_DIRECTOR":
       redirect(`/country`);
+    case "STUDENT":
+      redirect(`/student`);
     default:
       redirect(`/coming-soon`);
   }
