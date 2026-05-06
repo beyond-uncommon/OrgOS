@@ -83,7 +83,9 @@ export function MyStudentsClient({
 
         {filtered.length === 0 ? (
           <Typography sx={{ color: "text.secondary" }}>
-            No students registered yet. Submit your first session to register students.
+            {students.length === 0
+              ? "No students registered yet. Submit your first session to register students."
+              : "No students match the current filter."}
           </Typography>
         ) : (
           <Table size="small">
