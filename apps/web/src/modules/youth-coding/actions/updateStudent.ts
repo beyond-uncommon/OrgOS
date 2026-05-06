@@ -6,6 +6,7 @@ import { studentRegistrationSchema } from "../schema";
 
 export async function updateStudent(
   studentId: string,
+  callerUserId: string,
   formData: unknown,
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = studentRegistrationSchema.safeParse(formData);
@@ -13,11 +14,29 @@ export async function updateStudent(
     return { success: false, error: parsed.error.message };
   }
 
-  const student = await prisma.student.update({
+  const existing = await prisma.student.findUnique({
     where: { id: studentId },
-    data: parsed.data,
-    select: { id: true },
+    select: { instructorId: true },
   });
 
-  return { success: true, data: student };
+  if (!existing) {
+    return { success: false, error: "Student not found." };
+  }
+
+  if (existing.instructorId !== callerUserId) {
+    return { success: false, error: "Not authorized to edit this student." };
+  }
+
+  try {
+    const student = await prisma.student.update({
+      where: { id: studentId },
+      data: parsed.data,
+      select: { id: true },
+    });
+
+    return { success: true, data: student };
+  } catch (e: unknown) {
+    const err = e as Error;
+    return { success: false, error: err.message };
+  }
 }

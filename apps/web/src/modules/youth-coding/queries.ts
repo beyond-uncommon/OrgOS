@@ -39,7 +39,14 @@ export async function getYCHubSummary(departmentId: string) {
   });
 
   const uniqueStudents = await prisma.sessionAttendance.findMany({
-    where: { session: { departmentId } },
+    where: {
+      session: {
+        departmentId,
+        date: {
+          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+        },
+      },
+    },
     select: { studentId: true },
     distinct: ["studentId"],
   });
@@ -116,7 +123,7 @@ export async function getYCInstructorSummary(instructorId: string) {
         )
       : 0;
 
-  return { uniqueYouthStudents, sessionsThisWeek, completionRate };
+  return { uniqueYouthStudents, sessionCount: sessionsThisWeek, completionRate };
 }
 
 export async function getYCBootcampAggregate(hubDepartmentIds: string[]) {
@@ -159,10 +166,11 @@ export async function getYCOrgSummary(allHubDepartmentIds: string[]) {
       }),
       prisma.student.groupBy({
         by: ["gender"],
-        where: { enrollmentStatus: "ACTIVE" },
+        where: { enrollmentStatus: "ACTIVE", departmentId: { in: allHubDepartmentIds } },
         _count: true,
       }),
       prisma.youthCodingSession.findMany({
+        where: { departmentId: { in: allHubDepartmentIds } },
         select: { school: true },
         distinct: ["school"],
       }),

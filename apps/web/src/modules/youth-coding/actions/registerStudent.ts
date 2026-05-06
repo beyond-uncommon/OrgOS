@@ -14,20 +14,25 @@ export async function registerStudent(
     return { success: false, error: parsed.error.message };
   }
 
-  const student = await prisma.student.create({
-    data: {
-      name: parsed.data.name,
-      age: parsed.data.age,
-      gender: parsed.data.gender,
-      school: parsed.data.school,
-      grade: parsed.data.grade,
-      community: parsed.data.community,
-      departmentId,
-      instructorId,
-      enrollmentStatus: "ACTIVE",
-    },
-    select: { id: true, name: true },
-  });
+  try {
+    const student = await prisma.student.create({
+      data: {
+        name: parsed.data.name,
+        age: parsed.data.age,
+        gender: parsed.data.gender,
+        school: parsed.data.school,
+        grade: parsed.data.grade,
+        community: parsed.data.community,
+        departmentId,
+        instructorId,
+        enrollmentStatus: "ACTIVE",
+      },
+      select: { id: true, name: true },
+    });
 
-  return { success: true, data: student };
+    return { success: true, data: student };
+  } catch (e: unknown) {
+    const err = e as Error;
+    return { success: false, error: err.message };
+  }
 }

@@ -10,7 +10,7 @@ export const studentRegistrationSchema = z.object({
 });
 
 export const sessionPhase1Schema = z.object({
-  date: z.string().min(1),
+  date: z.string().date(),
   lessonNumber: z.number().int().min(1),
   projectName: z.string().min(1),
   school: z.string().min(1),
@@ -19,7 +19,7 @@ export const sessionPhase1Schema = z.object({
 });
 
 export const attendanceRecordSchema = z.object({
-  studentId: z.string(),
+  studentId: z.string().min(1),
   present: z.boolean(),
   projectStatus: z.enum(["COMPLETE", "NOT_COMPLETE"]),
 });

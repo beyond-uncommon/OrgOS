@@ -16,7 +16,7 @@ export async function submitSession(
 
   const { phase1, attendance, newStudents } = parsed.data;
 
-  // Validate instructorIds belong to this department
+  // Validate instructorIds belong to this department (read-only, outside transaction)
   const validUsers = await prisma.user.findMany({
     where: { departmentId, id: { in: phase1.instructorIds } },
     select: { id: true },
@@ -25,50 +25,64 @@ export async function submitSession(
     return { success: false, error: "One or more instructor IDs are invalid for this department." };
   }
 
-  // Register any new students first
-  const newStudentIds: string[] = [];
-  if (newStudents?.length) {
-    for (const s of newStudents) {
-      const created = await prisma.student.create({
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // Register any new students first
+      const newStudentIds: string[] = [];
+      if (newStudents?.length) {
+        for (const s of newStudents) {
+          const created = await tx.student.create({
+            data: {
+              name: s.name,
+              age: s.age,
+              gender: s.gender,
+              school: s.school,
+              grade: s.grade,
+              community: s.community,
+              departmentId,
+              instructorId: submittedById,
+              enrollmentStatus: "ACTIVE",
+            },
+            select: { id: true },
+          });
+          newStudentIds.push(created.id);
+        }
+      }
+
+      // Build attendance: existing present students + all new students
+      const presentAttendance = [
+        ...attendance.filter(a => a.present),
+        ...newStudentIds.map(id => ({
+          studentId: id,
+          present: true as const,
+          projectStatus: "NOT_COMPLETE" as const,
+        })),
+      ];
+
+      return tx.youthCodingSession.create({
         data: {
-          name: s.name,
-          age: s.age,
-          gender: s.gender,
-          school: s.school,
-          grade: s.grade,
-          community: s.community,
+          date: new Date(phase1.date),
+          lessonNumber: phase1.lessonNumber,
+          projectName: phase1.projectName,
+          school: phase1.school,
+          community: phase1.community,
           departmentId,
-          instructorId: submittedById,
-          enrollmentStatus: "ACTIVE",
+          submittedById,
+          instructorIds: phase1.instructorIds,
+          attendance: {
+            create: presentAttendance.map(a => ({
+              studentId: a.studentId,
+              projectStatus: a.projectStatus as ProjectStatus,
+            })),
+          },
         },
         select: { id: true },
       });
-      newStudentIds.push(created.id);
-    }
+    });
+
+    return { success: true, data: result };
+  } catch (e: unknown) {
+    const err = e as Error;
+    return { success: false, error: err.message };
   }
-
-  // Build attendance rows (only present students)
-  const presentAttendance = attendance.filter(a => a.present);
-
-  const session = await prisma.youthCodingSession.create({
-    data: {
-      date: new Date(phase1.date),
-      lessonNumber: phase1.lessonNumber,
-      projectName: phase1.projectName,
-      school: phase1.school,
-      community: phase1.community,
-      departmentId,
-      submittedById,
-      instructorIds: phase1.instructorIds,
-      attendance: {
-        create: presentAttendance.map(a => ({
-          studentId: a.studentId,
-          projectStatus: a.projectStatus as ProjectStatus,
-        })),
-      },
-    },
-    select: { id: true },
-  });
-
-  return { success: true, data: session };
 }
