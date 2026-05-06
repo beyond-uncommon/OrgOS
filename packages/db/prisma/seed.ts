@@ -266,6 +266,17 @@ async function main() {
     data: { id: "hub-3", name: "Hub 3 — Design", parentDepartmentId: bootcamp.id },
   });
 
+  // ── YC Hubs (under Youth Coding Program) ─────────────────────────────────
+  const ycHub1 = await prisma.department.create({
+    data: { id: "yc-hub-dzivarasekwa", name: "Dzivarasekwa Hub", parentDepartmentId: progYC.id },
+  });
+  const ycHub2 = await prisma.department.create({
+    data: { id: "yc-hub-2", name: "Budiriro Hub", parentDepartmentId: progYC.id },
+  });
+  const ycHub3 = await prisma.department.create({
+    data: { id: "yc-hub-3", name: "Highfields Hub", parentDepartmentId: progYC.id },
+  });
+
   // ── Leadership users ──────────────────────────────────────────────────────
   await prisma.user.create({
     data: { email: "director@uncommon.org", name: "Morgan Ellis", role: Role.COUNTRY_DIRECTOR, departmentId: org.id },
@@ -524,11 +535,12 @@ async function main() {
   });
 
   // ── Youth Coding seed data ────────────────────────────────────────────────
-  await seedYouthCoding([hub1, hub2, hub3]);
+  await seedYouthCoding([ycHub1, ycHub2, ycHub3]);
 
   console.log("✓ Seed complete.");
   console.log(`  Org tree: ${org.name} → [${progYC.name} | ${progOutreach.name} | ${progBootcamp.name} | ${progTeacherTraining.name}]`);
   console.log(`  Bootcamp path: ${progBootcamp.name} → ${bootcamp.name} → ${hub1.name} / ${hub2.name} / ${hub3.name}`);
+  console.log(`  YC Hubs: ${ycHub1.name} / ${ycHub2.name} / ${ycHub3.name}`);
   console.log(`  Instructors: ${allInstructors.length} (5 per hub)`);
   console.log(`  Demo instructor: ${demoInstructor.email}`);
   console.log(`  Hub Lead (Hub 1): hublead@uncommon.org / hublead`);

@@ -236,3 +236,13 @@ export async function getYCMasterList(departmentId?: string) {
     orderBy: { name: "asc" },
   });
 }
+
+export async function getYCHubs() {
+  return prisma.department.findMany({
+    where: {
+      parent: { name: "Youth Coding Program" },
+    },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+}

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import {
   Box, Container, Typography, Table, TableHead, TableRow, TableCell,
-  TableBody, Select, MenuItem, FormControl, InputLabel, Button, Tabs, Tab,
+  TableBody, Select, MenuItem, FormControl, InputLabel, Button, Tabs, Tab, Divider,
 } from "@mui/material";
 import { UserBar } from "@/components/UserBar";
 
@@ -17,7 +17,7 @@ interface YCStudent {
   community: string | null;
   department: { id: string; name: string };
   instructor: { id: string; name: string };
-  sessionAttendance: { projectStatus: string }[];
+  sessionAttendance: { projectStatus: string; session: { id: string; date: string | Date } }[];
 }
 
 interface YCMetrics {
@@ -27,6 +27,31 @@ interface YCMetrics {
   genderBreakdown: { gender: string; count: number }[];
   communityCount: number;
   schoolCount: number;
+}
+
+interface Hub {
+  id: string;
+  name: string;
+}
+
+function computeMetrics(students: YCStudent[]): YCMetrics {
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
+  const taughtYTD = students.filter(s =>
+    s.sessionAttendance.some(a => new Date(a.session.date) >= yearStart)
+  ).length;
+  const totalAge = students.reduce((sum, s) => sum + (s.age ?? 0), 0);
+  const genderMap = new Map<string, number>();
+  for (const s of students) {
+    if (s.gender) genderMap.set(s.gender, (genderMap.get(s.gender) ?? 0) + 1);
+  }
+  return {
+    totalRegistered: students.length,
+    taughtYTD,
+    averageAge: students.length ? Math.round((totalAge / students.length) * 10) / 10 : 0,
+    genderBreakdown: [...genderMap.entries()].map(([gender, count]) => ({ gender, count })),
+    communityCount: new Set(students.map(s => s.community).filter(Boolean)).size,
+    schoolCount: new Set(students.map(s => s.school).filter(Boolean)).size,
+  };
 }
 
 function MetricCard({ label, value }: { label: string; value: string | number }) {
@@ -43,23 +68,35 @@ function MetricCard({ label, value }: { label: string; value: string | number })
 export function YCMasterClient({
   user,
   students,
-  metrics,
+  metrics: serverMetrics,
+  hubs,
 }: {
   user: { name: string; role: string };
   students: YCStudent[];
   metrics: YCMetrics;
+  hubs: Hub[];
 }) {
   const [tab, setTab] = useState(0);
+  const [selectedHub, setSelectedHub] = useState("");
   const [hubFilter, setHubFilter] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
   const [genderFilter, setGenderFilter] = useState("");
   const [gradeFilter, setGradeFilter] = useState("");
 
-  const hubs = useMemo(() => [...new Set(students.map(s => s.department.name))].sort(), [students]);
-  const schools = useMemo(() => [...new Set(students.map(s => s.school).filter(Boolean))].sort() as string[], [students]);
-  const grades = useMemo(() => [...new Set(students.map(s => s.grade).filter(Boolean))].sort() as string[], [students]);
+  const hubStudents = useMemo(
+    () => selectedHub ? students.filter(s => s.department.id === selectedHub) : students,
+    [students, selectedHub],
+  );
 
-  const filtered = students.filter(s =>
+  const metrics = useMemo(
+    () => selectedHub ? computeMetrics(hubStudents) : serverMetrics,
+    [hubStudents, selectedHub, serverMetrics],
+  );
+
+  const schools = useMemo(() => [...new Set(hubStudents.map(s => s.school).filter(Boolean))].sort() as string[], [hubStudents]);
+  const grades = useMemo(() => [...new Set(hubStudents.map(s => s.grade).filter(Boolean))].sort() as string[], [hubStudents]);
+
+  const filtered = hubStudents.filter(s =>
     (!hubFilter || s.department.name === hubFilter) &&
     (!schoolFilter || s.school === schoolFilter) &&
     (!genderFilter || s.gender === genderFilter) &&
@@ -88,6 +125,8 @@ export function YCMasterClient({
     URL.revokeObjectURL(url);
   }
 
+  const selectedHubName = hubs.find(h => h.id === selectedHub)?.name ?? "All Hubs";
+
   return (
     <Box sx={{ minHeight: "100vh" }}>
       <Box sx={{ borderBottom: "1px solid", borderBottomColor: "divider", bgcolor: "rgb(var(--mui-palette-background-defaultChannel) / 0.8)", backdropFilter: "blur(12px)" }}>
@@ -102,10 +141,29 @@ export function YCMasterClient({
       </Box>
 
       <Container maxWidth="xl" sx={{ py: 6 }}>
-        <Typography variant="h4" sx={{ mb: 1, letterSpacing: "-0.02em" }}>Youth Coding</Typography>
-        <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-          {students.length} registered students
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
+          <Box>
+            <Typography variant="h4" sx={{ mb: 0.5, letterSpacing: "-0.02em" }}>Youth Coding</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              {students.length} registered students
+            </Typography>
+          </Box>
+
+          {hubs.length > 0 && (
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Hub</InputLabel>
+              <Select
+                value={selectedHub}
+                label="Hub"
+                onChange={e => { setSelectedHub(e.target.value); setSchoolFilter(""); setHubFilter(""); }}
+              >
+                <MenuItem value="">All Hubs</MenuItem>
+                <Divider />
+                {hubs.map(h => <MenuItem key={h.id} value={h.id}>{h.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+          )}
+        </Box>
 
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 4, borderBottom: "1px solid", borderColor: "divider" }}>
           <Tab label="Metrics" />
@@ -116,11 +174,11 @@ export function YCMasterClient({
         {tab === 0 && (
           <Box>
             <Typography variant="h6" sx={{ mb: 3, color: "text.secondary", fontWeight: 400 }}>
-              Programme Overview — {new Date().getFullYear()}
+              {selectedHubName} — {new Date().getFullYear()}
             </Typography>
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 5 }}>
               <MetricCard label="Registered (all time)" value={metrics.totalRegistered} />
-              <MetricCard label={`Taught YTD`} value={metrics.taughtYTD} />
+              <MetricCard label="Taught YTD" value={metrics.taughtYTD} />
               <MetricCard label="Avg Age" value={metrics.averageAge} />
               <MetricCard label="Schools" value={metrics.schoolCount} />
               <MetricCard label="Communities" value={metrics.communityCount} />
@@ -141,13 +199,6 @@ export function YCMasterClient({
           <Box>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                <FormControl size="small" sx={{ minWidth: 140 }}>
-                  <InputLabel>Hub</InputLabel>
-                  <Select value={hubFilter} label="Hub" onChange={e => setHubFilter(e.target.value)}>
-                    <MenuItem value="">All</MenuItem>
-                    {hubs.map(h => <MenuItem key={h} value={h}>{h}</MenuItem>)}
-                  </Select>
-                </FormControl>
                 <FormControl size="small" sx={{ minWidth: 160 }}>
                   <InputLabel>School</InputLabel>
                   <Select value={schoolFilter} label="School" onChange={e => setSchoolFilter(e.target.value)}>
@@ -176,7 +227,7 @@ export function YCMasterClient({
             </Box>
 
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-              {filtered.length} of {students.length} students
+              {filtered.length} of {hubStudents.length} students{selectedHub ? ` in ${selectedHubName}` : ""}
             </Typography>
 
             <Table size="small">
