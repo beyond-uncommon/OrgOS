@@ -23,11 +23,11 @@ export default async function CountryDirectorPage() {
   if (!sessionUser) redirect("/login");
 
   const role = sessionUser.role;
-  if (role !== "COUNTRY_DIRECTOR" && role !== "ADMIN") {
+  const programManagerRoles = new Set(["PROGRAM_MANAGER", "YOUTH_CODING_MANAGER", "BOOTCAMP_MANAGER", "TEACHER_TRAINING_COORDINATOR"]);
+  if (!["COUNTRY_DIRECTOR", "ADMIN"].includes(role)) {
     if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
     else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
-    else if (role === "BOOTCAMP_MANAGER") redirect(`/bootcamps/${sessionUser.departmentId}`);
-    else if (role === "PROGRAM_MANAGER") redirect(`/programs/${sessionUser.departmentId}`);
+    else if (programManagerRoles.has(role)) redirect("/programs");
     else redirect("/coming-soon");
   }
 
@@ -38,6 +38,7 @@ export default async function CountryDirectorPage() {
   const ycSummary = await getYCOrgSummary(allHubIds);
 
   const managerMap = new Map(programManagers.map((m) => [m.departmentId, m.name]));
+  const fallbackManager = programManagers[0]?.name;
 
   let totalAtt = 0; let hubsWithAtt = 0; let totalDropouts = 0;
   for (const hub of hubs) {
@@ -97,7 +98,7 @@ export default async function CountryDirectorPage() {
             <Grid container spacing={2}>
               {programs.map((program) => {
                 const programBootcamps = bootcamps.filter((b) => b.parentDepartmentId === program.id);
-                const manager = managerMap.get(program.id) ?? "—";
+                const manager = managerMap.get(program.id) ?? fallbackManager ?? "—";
                 return (
                   <Grid key={program.id} size={{ xs: 12 }}>
                     <Box

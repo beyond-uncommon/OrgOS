@@ -11,15 +11,14 @@ export function redirectByRole(
     case "HUB_LEAD":
       redirect(`/departments/${departmentId}`);
     case "BOOTCAMP_MANAGER":
-      redirect(`/bootcamps/${departmentId}`);
+    case "YOUTH_CODING_MANAGER":
+    case "TEACHER_TRAINING_COORDINATOR":
     case "PROGRAM_MANAGER":
-      redirect(`/programs/${departmentId}`);
+      redirect(`/programs`);
     case "COUNTRY_DIRECTOR":
       redirect(`/country`);
     case "STUDENT":
       redirect(`/student`);
-    case "YOUTH_CODING_MANAGER":
-      redirect(`/youth-coding`);
     default:
       redirect(`/coming-soon`);
   }

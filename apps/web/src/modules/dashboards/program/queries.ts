@@ -77,3 +77,20 @@ export async function getYCProgramData(programDepartmentId: string) {
 export async function getProgramWeeklyReports(programDepartmentId: string) {
   return getWeeklyReportsByDepartment(programDepartmentId);
 }
+
+export async function getAllProgramsData() {
+  const [ycData, bootcampData, ttReports, outreachReports] = await Promise.all([
+    getYCProgramData("prog-yc").catch(() => null),
+    getProgramDashboardData("prog-bootcamp").catch(() => null),
+    getWeeklyReportsByDepartment("prog-teacher-training").catch(() => []),
+    getWeeklyReportsByDepartment("prog-outreach").catch(() => []),
+  ]);
+
+  const programInfo = await prisma.department.findMany({
+    where: { id: { in: ["prog-yc", "prog-bootcamp", "prog-teacher-training", "prog-outreach"] } },
+    select: { id: true, name: true },
+  });
+  const programMap = Object.fromEntries(programInfo.map(p => [p.id, p.name]));
+
+  return { ycData, bootcampData, ttReports, outreachReports, programMap };
+}

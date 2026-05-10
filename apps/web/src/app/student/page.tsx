@@ -101,6 +101,18 @@ export default async function StudentDashboardPage() {
             <Typography variant="body1" sx={{ fontWeight: 600 }}>Student Feedback →</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>Collect daily feedback from students</Typography>
           </Box>
+          <Box
+            component={Link}
+            href={`/yc/attendance/${user.departmentId}`}
+            sx={{
+              px: 3, py: 2, border: "1px solid", borderColor: "divider",
+              borderRadius: 2, textDecoration: "none", color: "text.primary",
+              "&:hover": { borderColor: "primary.main" },
+            }}
+          >
+            <Typography variant="body1" sx={{ fontWeight: 600 }}>Hub Attendance →</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>Daily QR attendance check-in</Typography>
+          </Box>
         </Box>
 
         {sessions.length > 0 && (

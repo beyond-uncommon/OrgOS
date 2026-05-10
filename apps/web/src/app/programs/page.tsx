@@ -1,22 +1,12 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { Box, Container, Typography, Chip } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import Link from "next/link";
-import { prisma } from "@orgos/db";
 import { getSessionUser } from "@/lib/auth/session";
 import { UserBar } from "@/components/UserBar";
 import { RisksPanel } from "@/modules/dashboards/department/RisksPanel";
-import {
-  getProgramDashboardData,
-  getYCProgramData,
-  getProgramWeeklyReports,
-  detectProgramType,
-} from "@/modules/dashboards/program/queries";
+import { getAllProgramsData } from "@/modules/dashboards/program/queries";
 import type { Alert } from "@orgos/db";
-
-interface Props {
-  params: Promise<{ departmentId: string }>;
-}
 
 function latestMetric(data: Record<string, unknown[]> | null, key: string): number | null {
   if (!data) return null;
@@ -33,44 +23,23 @@ function statusColor(status: string): "default" | "warning" | "success" | "info"
   return "default";
 }
 
-export default async function ProgramDashboardPage({ params }: Props) {
-  const { departmentId } = await params;
-
+export default async function ProgramsOverviewPage() {
   const sessionUser = await getSessionUser();
   if (!sessionUser) redirect("/login");
 
   const role = sessionUser.role;
-  const programManagerRoles = new Set(["PROGRAM_MANAGER", "YOUTH_CODING_MANAGER", "BOOTCAMP_MANAGER", "TEACHER_TRAINING_COORDINATOR"]);
-  if (programManagerRoles.has(role)) redirect("/programs");
-  if (!["ADMIN", "COUNTRY_DIRECTOR"].includes(role)) {
+  const allowed = new Set(["PROGRAM_MANAGER", "ADMIN", "COUNTRY_DIRECTOR", "YOUTH_CODING_MANAGER", "BOOTCAMP_MANAGER", "TEACHER_TRAINING_COORDINATOR"]);
+  if (!allowed.has(role)) {
     if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
     else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
     else redirect("/coming-soon");
   }
 
-  const program = await prisma.department.findUnique({
-    where: { id: departmentId },
-    select: { name: true },
-  });
-  if (!program) notFound();
-
-  const programType = detectProgramType(program.name);
-
-  // Fetch data based on program type
-  const [programData, ycData, weeklyReports] = await Promise.all([
-    programType === "BOOTCAMP" ? getProgramDashboardData(departmentId) : Promise.resolve(null),
-    programType === "YOUTH_CODING" ? getYCProgramData(departmentId) : Promise.resolve(null),
-    programType !== "BOOTCAMP" && programType !== "YOUTH_CODING"
-      ? getProgramWeeklyReports(departmentId)
-      : Promise.resolve([]),
-  ]);
-
-  const ycWeeklyReports = ycData?.weeklyReports ?? [];
-  const genericWeeklyReports = weeklyReports;
+  const allData = await getAllProgramsData();
+  const { ycData, bootcampData, ttReports, outreachReports } = allData;
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
-      {/* Header */}
       <Box sx={{ borderBottom: "1px solid", borderBottomColor: "divider", bgcolor: "rgb(var(--mui-palette-background-defaultChannel) / 0.8)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 10 }}>
         <Container maxWidth="xl">
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 2 }}>
@@ -79,7 +48,7 @@ export default async function ProgramDashboardPage({ params }: Props) {
                 Org<Box component="span" sx={{ color: "primary.main" }}>OS</Box>
               </Typography>
               <Box sx={{ width: 1, height: 20, bgcolor: "divider" }} />
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>{program.name}</Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>Program Overview</Typography>
             </Box>
             {sessionUser && <UserBar name={sessionUser.name} role={sessionUser.role} />}
           </Box>
@@ -89,9 +58,13 @@ export default async function ProgramDashboardPage({ params }: Props) {
       <Container maxWidth="xl" sx={{ py: 4 }}>
 
         {/* ── YOUTH CODING ─────────────────────────────────── */}
-        {programType === "YOUTH_CODING" && ycData && (
+        {ycData && (
           <>
-            {/* Metrics */}
+            <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography variant="h5" sx={{ fontWeight: 600, letterSpacing: "-0.02em" }}>Youth Coding</Typography>
+              <Chip label="Program" size="small" color="primary" />
+            </Box>
+
             <Grid container spacing={2} sx={{ mb: 4 }}>
               {[
                 { label: "Registered Students", value: String(ycData.metrics.totalRegistered) },
@@ -110,7 +83,6 @@ export default async function ProgramDashboardPage({ params }: Props) {
               ))}
             </Grid>
 
-            {/* Gender breakdown */}
             {ycData.metrics.genderBreakdown.length > 0 && (
               <Box sx={{ mb: 4 }}>
                 <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>Gender Breakdown</Typography>
@@ -125,7 +97,6 @@ export default async function ProgramDashboardPage({ params }: Props) {
               </Box>
             )}
 
-            {/* Hubs */}
             {ycData.hubs.length > 0 && (
               <Box sx={{ mb: 4 }}>
                 <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>Hubs</Typography>
@@ -144,35 +115,47 @@ export default async function ProgramDashboardPage({ params }: Props) {
               </Box>
             )}
 
-            {/* Weekly Reports */}
-            <WeeklyReportsSection reports={ycWeeklyReports} />
+            <Box sx={{ mb: 5 }}>
+              <WeeklyReportsSection
+                reports={ycData.weeklyReports.map(r => ({
+                  ...r,
+                  weekStart: new Date(r.weekStart),
+                  weekEnd: new Date(r.weekEnd),
+                }))}
+              />
+            </Box>
           </>
         )}
 
         {/* ── BOOTCAMP ─────────────────────────────────────── */}
-        {programType === "BOOTCAMP" && programData && (
+        {bootcampData && (
           <>
+            <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography variant="h5" sx={{ fontWeight: 600, letterSpacing: "-0.02em" }}>Bootcamp</Typography>
+              <Chip label="Program" size="small" color="secondary" />
+            </Box>
+
             {(() => {
-              const allHubs = [...programData.hubsByBootcamp.values()].flat();
+              const allHubs = [...bootcampData.hubsByBootcamp.values()].flat();
               let totalAtt = 0; let hubsWithAtt = 0; let totalDropouts = 0;
               for (const hub of allHubs) {
-                const data = programData.latestSnapshot.get(hub.id)?.data as Record<string, unknown[]> | null;
+                const data = bootcampData.latestSnapshot.get(hub.id)?.data as Record<string, unknown[]> | null;
                 const att = latestMetric(data, "attendance_rate");
                 const drop = latestMetric(data, "dropout_count");
                 if (att !== null) { totalAtt += att; hubsWithAtt++; }
                 if (drop !== null) totalDropouts += drop;
               }
               const avgAtt = hubsWithAtt > 0 ? `${(totalAtt / hubsWithAtt * 100).toFixed(0)}%` : "—";
-              const managerMap = new Map(programData.bootcampManagers.map((m) => [m.departmentId, m.name]));
+              const managerMap = new Map(bootcampData.bootcampManagers.map(m => [m.departmentId, m.name]));
 
               return (
                 <>
                   <Grid container spacing={2} sx={{ mb: 4 }}>
                     {[
-                      { label: "Bootcamps", value: String(programData.bootcamps.length) },
+                      { label: "Bootcamps", value: String(bootcampData.bootcamps.length) },
                       { label: "Total Hubs", value: String(allHubs.length) },
                       { label: "Avg Attendance", value: avgAtt },
-                      { label: "Active Alerts", value: String(programData.alerts.length) },
+                      { label: "Active Alerts", value: String(bootcampData.alerts.length) },
                     ].map(({ label, value }) => (
                       <Grid key={label} size={{ xs: 6, md: 3 }}>
                         <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2.5, bgcolor: "background.paper" }}>
@@ -187,12 +170,12 @@ export default async function ProgramDashboardPage({ params }: Props) {
                     <Grid size={{ xs: 12, md: 8 }}>
                       <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>Bootcamps</Typography>
                       <Grid container spacing={2}>
-                        {programData.bootcamps.map((bootcamp) => {
-                          const hubs = programData.hubsByBootcamp.get(bootcamp.id) ?? [];
+                        {bootcampData.bootcamps.map(bootcamp => {
+                          const hubs = bootcampData.hubsByBootcamp.get(bootcamp.id) ?? [];
                           const manager = managerMap.get(bootcamp.id) ?? "—";
                           let bAtt = 0; let bHubs = 0; let bDropouts = 0;
                           for (const hub of hubs) {
-                            const data = programData.latestSnapshot.get(hub.id)?.data as Record<string, unknown[]> | null;
+                            const data = bootcampData.latestSnapshot.get(hub.id)?.data as Record<string, unknown[]> | null;
                             const att = latestMetric(data, "attendance_rate");
                             const drop = latestMetric(data, "dropout_count");
                             if (att !== null) { bAtt += att; bHubs++; }
@@ -231,28 +214,46 @@ export default async function ProgramDashboardPage({ params }: Props) {
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
                       <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>Active Alerts</Typography>
-                      <RisksPanel alerts={programData.alerts as Alert[]} />
+                      <RisksPanel alerts={bootcampData.alerts as Alert[]} />
                     </Grid>
                   </Grid>
-
-                  <WeeklyReportsSection reports={[]} />
                 </>
               );
             })()}
           </>
         )}
 
-        {/* ── OUTREACH / TEACHER TRAINING / UNKNOWN ─────── */}
-        {(programType === "OUTREACH" || programType === "TEACHER_TRAINING" || programType === "UNKNOWN") && (
-          <>
-            <Box sx={{ mb: 4, p: 3, border: "1px solid", borderColor: "divider", borderRadius: 2, bgcolor: "background.paper" }}>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Operational data collection for {program.name} is coming soon. Weekly reports are available below.
-              </Typography>
-            </Box>
-            <WeeklyReportsSection reports={genericWeeklyReports} />
-          </>
-        )}
+        {/* ── TEACHER TRAINING ─────────────────────────────── */}
+        <Box sx={{ mb: 5 }}>
+          <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 600, letterSpacing: "-0.02em" }}>Teacher Training</Typography>
+            <Chip label="Program" size="small" color="success" />
+          </Box>
+
+          <Box sx={{ mb: 3, p: 3, border: "1px solid", borderColor: "divider", borderRadius: 2, bgcolor: "background.paper" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              Operational data collection for Teacher Training is coming soon.
+            </Typography>
+          </Box>
+
+          <WeeklyReportsSection reports={ttReports.map(r => ({ ...r, weekStart: new Date(r.weekStart), weekEnd: new Date(r.weekEnd) }))} />
+        </Box>
+
+        {/* ── OUTREACH ─────────────────────────────────────── */}
+        <Box>
+          <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 600, letterSpacing: "-0.02em" }}>Outreach</Typography>
+            <Chip label="Program" size="small" color="info" />
+          </Box>
+
+          <Box sx={{ mb: 3, p: 3, border: "1px solid", borderColor: "divider", borderRadius: 2, bgcolor: "background.paper" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              Operational data collection for Outreach is coming soon.
+            </Typography>
+          </Box>
+
+          <WeeklyReportsSection reports={outreachReports.map(r => ({ ...r, weekStart: new Date(r.weekStart), weekEnd: new Date(r.weekEnd) }))} />
+        </Box>
 
       </Container>
     </Box>

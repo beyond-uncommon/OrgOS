@@ -33,9 +33,9 @@ export async function getCountryDashboardData() {
   });
   const hubIds = hubs.map((h) => h.id);
 
-  const [programManagers, snapshots, studentCount] = await Promise.all([
+  const [allProgramManagers, snapshots, studentCount] = await Promise.all([
     prisma.user.findMany({
-      where: { departmentId: { in: programIds }, role: Role.PROGRAM_MANAGER },
+      where: { role: Role.PROGRAM_MANAGER },
       select: { departmentId: true, name: true },
     }),
     prisma.dashboardSnapshot.findMany({
@@ -50,5 +50,5 @@ export async function getCountryDashboardData() {
     if (s.departmentId && !latestSnapshot.has(s.departmentId)) latestSnapshot.set(s.departmentId, s);
   }
 
-  return { programs, programManagers, bootcamps, hubs, latestSnapshot, alerts, studentCount };
+  return { programs, programManagers: allProgramManagers, bootcamps, hubs, latestSnapshot, alerts, studentCount };
 }

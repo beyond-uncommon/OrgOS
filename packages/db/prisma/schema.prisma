@@ -28,6 +28,7 @@ model Student {
   instructor        User                @relation("InstructorStudents", fields: [instructorId], references: [id])
   sessionAttendance SessionAttendance[]
   reports           StudentReport[]
+  attendanceRecords AttendanceRecord[]
 
   @@index([instructorId])
   @@index([departmentId])
@@ -51,6 +52,7 @@ model Department {
   users               User[]
   weeklyReports       WeeklyReport[]
   youthCodingSessions YouthCodingSession[]
+  attendanceSessions  AttendanceSession[]
 
   @@index([parentDepartmentId])
 }
@@ -394,6 +396,34 @@ model GovernanceAuditRecord {
   @@index([departmentId, createdAt])
   @@index([actionPlanId])
   @@index([forecastRunId])
+}
+
+model AttendanceSession {
+  id            String              @id @default(cuid())
+  departmentId  String
+  date          DateTime            @db.Date
+  token         String              @unique
+  deviceIP      String?
+  isActive      Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  department    Department          @relation(fields: [departmentId], references: [id])
+  records       AttendanceRecord[]
+
+  @@unique([departmentId, date])
+  @@index([token])
+}
+
+model AttendanceRecord {
+  id          String            @id @default(cuid())
+  sessionId   String
+  studentId   String
+  checkedInAt DateTime          @default(now())
+  session     AttendanceSession @relation(fields: [sessionId], references: [id])
+  student     Student           @relation(fields: [studentId], references: [id])
+
+  @@unique([sessionId, studentId])
+  @@index([sessionId])
 }
 
 model DashboardSnapshot {
