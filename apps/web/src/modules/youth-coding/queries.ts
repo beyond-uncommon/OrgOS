@@ -252,23 +252,27 @@ export async function getYCStudentReports(departmentId?: string, days = 7) {
   from.setDate(from.getDate() - days);
   from.setHours(0, 0, 0, 0);
 
-  const where = departmentId
-    ? { student: { departmentId }, date: { gte: from } }
-    : {
-        student: { department: { parent: { name: "Youth Coding Program" } } },
-        date: { gte: from },
-      };
+  try {
+    const where = departmentId
+      ? { student: { departmentId }, date: { gte: from } }
+      : {
+          student: { department: { parent: { name: "Youth Coding Program" } } },
+          date: { gte: from },
+        };
 
-  return prisma.studentReport.findMany({
-    where,
-    include: {
-      student: {
-        select: { name: true, department: { select: { id: true, name: true } } },
+    return await prisma.studentReport.findMany({
+      where,
+      include: {
+        student: {
+          select: { name: true, department: { select: { id: true, name: true } } },
+        },
       },
-    },
-    orderBy: { date: "desc" },
-    take: 100,
-  });
+      orderBy: { date: "desc" },
+      take: 100,
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function getYCInstructorEntries(departmentId?: string, days = 7) {
@@ -276,46 +280,54 @@ export async function getYCInstructorEntries(departmentId?: string, days = 7) {
   from.setDate(from.getDate() - days);
   from.setHours(0, 0, 0, 0);
 
-  const hubIds = departmentId
-    ? [departmentId]
-    : (await prisma.department.findMany({
-        where: { parent: { name: "Youth Coding Program" } },
-        select: { id: true },
-      })).map(d => d.id);
+  try {
+    const hubIds = departmentId
+      ? [departmentId]
+      : (await prisma.department.findMany({
+          where: { parent: { name: "Youth Coding Program" } },
+          select: { id: true },
+        })).map(d => d.id);
 
-  return prisma.dailyEntry.findMany({
-    where: {
-      departmentId: { in: hubIds },
-      date: { gte: from },
-      user: { role: Role.INSTRUCTOR },
-    },
-    include: {
-      user: { select: { id: true, name: true } },
-      department: { select: { id: true, name: true } },
-      extractedMetrics: {
-        select: { metricKey: true, metricValue: true, flagged: true },
+    return await prisma.dailyEntry.findMany({
+      where: {
+        departmentId: { in: hubIds },
+        date: { gte: from },
+        user: { role: Role.INSTRUCTOR },
       },
-    },
-    orderBy: { date: "desc" },
-    take: 100,
-  });
+      include: {
+        user: { select: { id: true, name: true } },
+        department: { select: { id: true, name: true } },
+        extractedMetrics: {
+          select: { metricKey: true, metricValue: true, flagged: true },
+        },
+      },
+      orderBy: { date: "desc" },
+      take: 100,
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function getYCWeeklyReports(departmentId?: string) {
-  const hubIds = departmentId
-    ? [departmentId]
-    : (await prisma.department.findMany({
-        where: { parent: { name: "Youth Coding Program" } },
-        select: { id: true },
-      })).map(d => d.id);
+  try {
+    const hubIds = departmentId
+      ? [departmentId]
+      : (await prisma.department.findMany({
+          where: { parent: { name: "Youth Coding Program" } },
+          select: { id: true },
+        })).map(d => d.id);
 
-  return prisma.weeklyReport.findMany({
-    where: { departmentId: { in: hubIds } },
-    include: {
-      department: { select: { id: true, name: true } },
-      reviewedBy: { select: { name: true } },
-    },
-    orderBy: { weekStart: "desc" },
-    take: 50,
-  });
+    return await prisma.weeklyReport.findMany({
+      where: { departmentId: { in: hubIds } },
+      include: {
+        department: { select: { id: true, name: true } },
+        reviewedBy: { select: { name: true } },
+      },
+      orderBy: { weekStart: "desc" },
+      take: 50,
+    });
+  } catch {
+    return [];
+  }
 }
