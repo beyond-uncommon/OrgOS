@@ -49,7 +49,9 @@ export default async function BootcampDashboardPage({ params }: Props) {
   if (role !== "BOOTCAMP_MANAGER" && role !== "ADMIN") {
     if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
     else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
-    else if (role === "PROGRAM_MANAGER" || role === "YOUTH_CODING_MANAGER" || role === "TEACHER_TRAINING_COORDINATOR") redirect("/programs");
+    else if (role === "PROGRAM_MANAGER") redirect("/programs");
+    else if (role === "YOUTH_CODING_MANAGER") redirect("/youth-coding");
+    else if (role === "TEACHER_TRAINING_COORDINATOR") redirect(`/programs/${sessionUser.departmentId}`);
     else if (role === "COUNTRY_DIRECTOR") redirect("/country");
     else redirect("/coming-soon");
   }

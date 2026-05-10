@@ -282,14 +282,24 @@ async function main() {
     data: { email: "director@uncommon.org", name: "Morgan Ellis", role: Role.COUNTRY_DIRECTOR, departmentId: org.id },
   });
 
-  // Single Program Manager — oversees all programs
+  // Program Manager — oversees all programs
   await prisma.user.create({
     data: { email: "program@uncommon.org", name: "Sam Torres", role: Role.PROGRAM_MANAGER, departmentId: org.id },
+  });
+
+  // Youth Coding Manager
+  await prisma.user.create({
+    data: { email: "ycmanager@uncommon.org", name: "Dana Osei", role: Role.YOUTH_CODING_MANAGER, departmentId: progYC.id },
   });
 
   // Bootcamp Manager — manages a specific bootcamp
   await prisma.user.create({
     data: { email: "bootcamp@uncommon.org", name: "Casey Morgan", role: Role.BOOTCAMP_MANAGER, departmentId: bootcamp.id },
+  });
+
+  // Teacher Training Coordinator
+  await prisma.user.create({
+    data: { email: "pm.tt@uncommon.org", name: "Nadia Osei", role: Role.TEACHER_TRAINING_COORDINATOR, departmentId: progTeacherTraining.id },
   });
 
   const hubLead1 = await prisma.user.create({

@@ -41,8 +41,9 @@ export default async function ProgramDashboardPage({ params }: Props) {
 
   const role = sessionUser.role;
   if (role === "BOOTCAMP_MANAGER") redirect(`/bootcamps/${sessionUser.departmentId}`);
-  if (role === "PROGRAM_MANAGER" || role === "YOUTH_CODING_MANAGER" || role === "TEACHER_TRAINING_COORDINATOR") redirect("/programs");
-  if (!["ADMIN", "COUNTRY_DIRECTOR"].includes(role)) {
+  if (role === "PROGRAM_MANAGER") redirect("/programs");
+  if (role === "YOUTH_CODING_MANAGER") redirect("/youth-coding");
+  if (!["ADMIN", "COUNTRY_DIRECTOR", "TEACHER_TRAINING_COORDINATOR"].includes(role)) {
     if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
     else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
     else redirect("/coming-soon");

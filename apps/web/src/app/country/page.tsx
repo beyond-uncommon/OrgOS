@@ -23,12 +23,13 @@ export default async function CountryDirectorPage() {
   if (!sessionUser) redirect("/login");
 
   const role = sessionUser.role;
-  const programRoles = new Set(["PROGRAM_MANAGER", "YOUTH_CODING_MANAGER", "TEACHER_TRAINING_COORDINATOR"]);
   if (!["COUNTRY_DIRECTOR", "ADMIN"].includes(role)) {
     if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
     else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
     else if (role === "BOOTCAMP_MANAGER") redirect(`/bootcamps/${sessionUser.departmentId}`);
-    else if (programRoles.has(role)) redirect("/programs");
+    else if (role === "PROGRAM_MANAGER") redirect("/programs");
+    else if (role === "YOUTH_CODING_MANAGER") redirect("/youth-coding");
+    else if (role === "TEACHER_TRAINING_COORDINATOR") redirect(`/programs/${sessionUser.departmentId}`);
     else redirect("/coming-soon");
   }
 

@@ -13,7 +13,9 @@ export function redirectByRole(
     case "BOOTCAMP_MANAGER":
       redirect(`/bootcamps/${departmentId}`);
     case "YOUTH_CODING_MANAGER":
+      redirect(`/youth-coding`);
     case "TEACHER_TRAINING_COORDINATOR":
+      redirect(`/programs/${departmentId}`);
     case "PROGRAM_MANAGER":
       redirect(`/programs`);
     case "COUNTRY_DIRECTOR":

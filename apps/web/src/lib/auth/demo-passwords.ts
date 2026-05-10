@@ -5,6 +5,8 @@ const DEV_PASSWORDS: Record<string, string> = {
   "yc.student3@uncommon.org": "yc.student3",
   "hublead@uncommon.org": "hublead",
   "bootcamp@uncommon.org": "bootcamp",
+  "ycmanager@uncommon.org": "ycmanager",
+  "pm.tt@uncommon.org": "pm.tt",
   "program@uncommon.org": "program",
   "director@uncommon.org": "director",
   "admin@uncommon.org": "admin",
