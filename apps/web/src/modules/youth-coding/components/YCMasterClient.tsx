@@ -7,6 +7,8 @@ import {
   Select, MenuItem, FormControl, InputLabel, Button, Tabs, Tab, Divider,
 } from "@mui/material";
 import { UserBar } from "@/components/UserBar";
+import { YCStudentReportsPanel } from "./YCStudentReportsPanel";
+import { YCInstructorReportsPanel } from "./YCInstructorReportsPanel";
 
 interface YCStudent {
   id: string;
@@ -33,6 +35,41 @@ interface YCMetrics {
 interface Hub {
   id: string;
   name: string;
+}
+
+interface StudentReport {
+  id: string;
+  date: Date;
+  learned: string;
+  enjoyed: string;
+  struggled: string | null;
+  rating: number;
+  student: { name: string; department: { id: string; name: string } };
+}
+
+interface InstructorEntry {
+  id: string;
+  date: Date;
+  reportType: string;
+  quickSummary: string;
+  attendanceStatus: string;
+  outputCompleted: string;
+  blockers: string;
+  engagementNotes: string;
+  totalStudents: number | null;
+  studentsPresent: number | null;
+  dropouts: number | null;
+  user: { id: string; name: string };
+  department: { id: string; name: string };
+}
+
+interface WeeklyReport {
+  id: string;
+  weekStart: Date;
+  weekEnd: Date;
+  status: string;
+  department: { id: string; name: string };
+  reviewedBy: { name: string } | null;
 }
 
 function computeMetrics(students: YCStudent[]): YCMetrics {
@@ -71,11 +108,17 @@ export function YCMasterClient({
   students,
   metrics: serverMetrics,
   hubs,
+  studentReports,
+  instructorEntries,
+  weeklyReports,
 }: {
   user: { name: string; role: string };
   students: YCStudent[];
   metrics: YCMetrics;
   hubs: Hub[];
+  studentReports: StudentReport[];
+  instructorEntries: InstructorEntry[];
+  weeklyReports: WeeklyReport[];
 }) {
   const [tab, setTab] = useState(0);
   const [selectedHub, setSelectedHub] = useState("");
@@ -169,6 +212,8 @@ export function YCMasterClient({
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 4, borderBottom: "1px solid", borderColor: "divider" }}>
           <Tab label="Metrics" />
           <Tab label="Master Database" />
+          <Tab label="Student Feedback" />
+          <Tab label="Instructor Reports" />
         </Tabs>
 
         {/* ── Metrics tab ── */}
@@ -192,6 +237,33 @@ export function YCMasterClient({
                 <MetricCard key={g.gender} label={g.gender === "M" ? "Male" : g.gender === "F" ? "Female" : "Other"} value={g.count} />
               ))}
             </Box>
+          </Box>
+        )}
+
+        {/* ── Student Feedback tab ── */}
+        {tab === 2 && (
+          <Box>
+            <Typography variant="h6" sx={{ mb: 3, color: "text.secondary", fontWeight: 400 }}>
+              Student Daily Feedback — Last 7 Days
+            </Typography>
+            <YCStudentReportsPanel
+              reports={selectedHub ? studentReports.filter(r => r.student.department.id === selectedHub) : studentReports}
+              hubFilter={selectedHubName}
+            />
+          </Box>
+        )}
+
+        {/* ── Instructor Reports tab ── */}
+        {tab === 3 && (
+          <Box>
+            <Typography variant="h6" sx={{ mb: 3, color: "text.secondary", fontWeight: 400 }}>
+              Instructor Daily Entries &amp; Weekly Reports — {selectedHubName}
+            </Typography>
+            <YCInstructorReportsPanel
+              entries={selectedHub ? instructorEntries.filter(e => e.department.id === selectedHub) : instructorEntries}
+              weeklyReports={selectedHub ? weeklyReports.filter(w => w.department.id === selectedHub) : weeklyReports}
+              hubFilter={selectedHubName}
+            />
           </Box>
         )}
 
