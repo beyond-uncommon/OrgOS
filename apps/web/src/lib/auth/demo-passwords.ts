@@ -24,9 +24,8 @@ export function getDemoPasswords(): Record<string, string> {
     }
   }
 
-  if (process.env.NODE_ENV === "production") {
-    console.warn("No DEMO_PASSWORDS configured in production — login will reject all users.");
-    return {};
+  if (!fromEnv && process.env.NODE_ENV === "production") {
+    console.warn("DEMO_PASSWORDS not configured in production — using dev defaults. Set DEMO_PASSWORDS env var for production.");
   }
 
   return DEV_PASSWORDS;
