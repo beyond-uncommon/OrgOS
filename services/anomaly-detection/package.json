@@ -11,6 +11,9 @@
     "@orgos/utils": "workspace:*",
     "@orgos/intervention-engine": "workspace:*"
   },
+  "scripts": {
+    "lint": "eslint src --ext .ts,.tsx"
+  },
   "devDependencies": {
     "typescript": "^5.4.5"
   }

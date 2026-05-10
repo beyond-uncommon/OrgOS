@@ -5,6 +5,8 @@ import {
   Box, Button, TextField, Typography, Checkbox, FormControlLabel,
   Select, MenuItem, FormControl, InputLabel, OutlinedInput,
   Alert,
+  Table, TableHead, TableRow, TableCell, TableBody, TableContainer,
+  Paper,
 } from "@mui/material";
 import { submitSession } from "../actions/submitSession";
 import { StudentRegisterRow } from "./StudentRegisterRow";
@@ -186,41 +188,46 @@ export function SessionForm({
           </Button>
         </Box>
       ) : (
-        <Box>
-          {attendance.map(a => {
-            const student = existingStudents.find(s => s.id === a.studentId);
-            return (
-              <Box
-                key={a.studentId}
-                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}
-              >
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={a.present}
-                      onChange={e => updateAttendance(a.studentId, "present", e.target.checked)}
-                    />
-                  }
-                  label={student?.name ?? a.studentId}
-                  sx={{ minWidth: 200 }}
-                />
-                <FormControl size="small" disabled={!a.present} sx={{ minWidth: 160 }}>
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    value={a.projectStatus}
-                    label="Status"
-                    onChange={e =>
-                      updateAttendance(a.studentId, "projectStatus", e.target.value)
-                    }
-                  >
-                    <MenuItem value="COMPLETE">Complete</MenuItem>
-                    <MenuItem value="NOT_COMPLETE">Not Complete</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-            );
-          })}
-        </Box>
+        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600 }}>Student</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Present</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {attendance.map(a => {
+                const student = existingStudents.find(s => s.id === a.studentId);
+                return (
+                  <TableRow key={a.studentId}>
+                    <TableCell>{student?.name ?? a.studentId}</TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={a.present}
+                        onChange={e => updateAttendance(a.studentId, "present", e.target.checked)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <FormControl size="small" disabled={!a.present} sx={{ minWidth: 140 }}>
+                        <Select
+                          value={a.projectStatus}
+                          onChange={e =>
+                            updateAttendance(a.studentId, "projectStatus", e.target.value)
+                          }
+                        >
+                          <MenuItem value="COMPLETE">Complete</MenuItem>
+                          <MenuItem value="NOT_COMPLETE">Not Complete</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
 
       {error && <Alert severity="error">{error}</Alert>}

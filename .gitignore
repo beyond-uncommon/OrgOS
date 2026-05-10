@@ -18,6 +18,7 @@ build
 
 # prisma
 prisma/migrations/dev.db
+.prisma
 
 # OS
 .DS_Store

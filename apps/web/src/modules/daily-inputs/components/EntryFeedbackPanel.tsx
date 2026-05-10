@@ -105,7 +105,7 @@ export function EntryFeedbackPanel({ entryId, reviewerId, reviewerRole, initialC
           </Typography>
           {request.note && (
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
-              "{request.note}"
+              &ldquo;{request.note}&rdquo;
             </Typography>
           )}
           <TextField

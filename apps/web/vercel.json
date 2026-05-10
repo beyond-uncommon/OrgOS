@@ -2,5 +2,19 @@
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
   "buildCommand": "cd ../.. && pnpm --filter @orgos/db exec prisma generate && pnpm --filter web build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/cron/daily",
+      "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/weekly",
+      "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron/monthly",
+      "schedule": "0 9 1 * *"
+    }
+  ]
 }

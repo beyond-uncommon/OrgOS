@@ -43,7 +43,7 @@ export function forecast(values: number[], stepsAhead: number, alpha = 0.3, beta
   if (values.length === 0) return { projected: 0, state: { level: 0, trend: 0 }, acceleration: 0 };
 
   let state = initSmoothedState(values);
-  let prevTrend = state.trend;
+  const prevTrend = state.trend;
 
   for (let i = 1; i < values.length; i++) {
     state = smoothStep(state, values[i], alpha, beta);

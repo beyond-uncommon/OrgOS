@@ -5,22 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@orgos/db";
 import { getSessionCookieName } from "./session";
 import { redirectByRole } from "./redirect-by-role";
-
-const DEMO_PASSWORDS: Record<string, string> = {
-  "alex.rivera@uncommon.org":  "instructor",
-  "yc.student1@uncommon.org":  "yc.student1",
-  "yc.student2@uncommon.org":  "yc.student2",
-  "yc.student3@uncommon.org":  "yc.student3",
-  "hublead@uncommon.org":      "hublead",
-  "bootcamp@uncommon.org":     "bootcamp",
-  "ycmanager@uncommon.org":    "ycmanager",
-  "program@uncommon.org":      "program",
-  "pm.yc@uncommon.org":        "pm.yc",
-  "pm.outreach@uncommon.org":  "pm.outreach",
-  "pm.tt@uncommon.org":        "pm.tt",
-  "director@uncommon.org":     "director",
-  "admin@uncommon.org":        "admin",
-};
+import { getDemoPasswords } from "./demo-passwords";
 
 async function setSessionAndRedirect(userId: string, role: string, departmentId: string | null) {
   const jar = await cookies();
@@ -41,7 +26,7 @@ export async function login(
   const email = (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
   const password = (formData.get("password") as string | null) ?? "";
 
-  const expected = DEMO_PASSWORDS[email];
+  const expected = getDemoPasswords()[email];
   if (!expected || expected !== password) {
     return { error: "Invalid email or password." };
   }

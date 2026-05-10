@@ -1,5 +1,6 @@
 export { getAccessibleDepartmentIds } from "./getAccessibleDepartmentIds.js";
 export { env } from "./env.js";
+export { withRetry } from "./retry.js";
 
 // ─── Date Utilities ───────────────────────────────────────────────────────────
 

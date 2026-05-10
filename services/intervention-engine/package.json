@@ -10,6 +10,9 @@
     "@orgos/shared-types": "workspace:*",
     "@orgos/utils": "workspace:*"
   },
+  "scripts": {
+    "lint": "eslint src --ext .ts,.tsx"
+  },
   "devDependencies": {
     "typescript": "^5.4.5"
   }

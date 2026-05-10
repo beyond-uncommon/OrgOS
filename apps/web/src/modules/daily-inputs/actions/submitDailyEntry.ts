@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma, EntryStatus } from "@orgos/db";
-import { toDateOnly, logError } from "@orgos/utils";
+import { logError, withRetry } from "@orgos/utils";
 import type { ActionResult } from "@orgos/utils";
 import type { DailyEntry } from "@orgos/shared-types";
 import { dailyEntryFormSchema } from "../schema";
@@ -16,55 +16,30 @@ export async function submitDailyEntry(
     return { success: false, error: parsed.error.message };
   }
 
-  const { date, ...fields } = parsed.data;
-  const entryDate = toDateOnly(date);
+  const { ingestDailyEntry } = await import("@orgos/ingestion-engine");
+  const result = await ingestDailyEntry({ userId, departmentId, ...parsed.data });
+  if (!result.success) return result;
 
-  const existing = await prisma.dailyEntry.findUnique({
-    where: { userId_date: { userId, date: entryDate } },
-  });
-  if (existing) {
-    return { success: false, error: "Entry already submitted for this date." };
-  }
+  const entry = result.data;
 
-  const entry = await prisma.dailyEntry.create({
-    data: {
-      userId,
-      departmentId,
-      date: entryDate,
-      status: EntryStatus.SUBMITTED,
-      attendanceStatus: fields.attendanceStatus,
-      outputCompleted: fields.outputCompleted,
-      blockers: fields.blockers,
-      engagementNotes: fields.engagementNotes,
-      quickSummary: fields.quickSummary,
-      totalStudents: fields.totalStudents ?? null,
-      studentsPresent: fields.studentsPresent ?? null,
-      dropouts: fields.dropouts ?? null,
-      maleStudents: fields.maleStudents ?? null,
-      femaleStudents: fields.femaleStudents ?? null,
-      otherGender: fields.otherGender ?? null,
-      averageAge: fields.averageAge ?? null,
-      mentorshipPairs: fields.mentorshipPairs ?? null,
-      engagementScore: fields.engagementScore ?? null,
-      guestsVisited: fields.guestsVisited,
-      guestNotes: fields.guestNotes ?? null,
-      reportType: fields.reportType,
-      ...(fields.studentsInvolvedIds?.length ? { studentsInvolvedIds: fields.studentsInvolvedIds } : {}),
-      ...(fields.dropoutStudentIds?.length ? { dropoutStudentIds: fields.dropoutStudentIds } : {}),
-      ...(fields.dropoutReasons && Object.keys(fields.dropoutReasons).length ? { dropoutReasons: fields.dropoutReasons } : {}),
-    },
-  });
-
-  // Fire-and-forget pipeline. Safe in a persistent Node.js process.
+  // Fire-and-forget pipeline with retry. Safe in a persistent Node.js process.
   // Dynamic imports prevent webpack from bundling service ESM packages at build time.
   void (async () => {
-    try {
+    const pipelineResult = await withRetry(async () => {
       const { extractMetrics } = await import("@orgos/metric-extraction");
-      await extractMetrics(entry);
+      const extractionResult = await extractMetrics(entry);
+      if (!extractionResult.success) throw new Error(extractionResult.error);
+
       const { refreshDepartmentSnapshot } = await import("@orgos/dashboard-engine");
       await refreshDepartmentSnapshot(departmentId, entry.date);
-    } catch (err) {
-      logError("submit_daily_entry.pipeline_error", err, { entryId: entry.id });
+    }, { label: "daily_entry_pipeline", maxRetries: 3, baseDelayMs: 2000 });
+
+    if (!pipelineResult.success) {
+      logError("submit_daily_entry.pipeline_failed", new Error(pipelineResult.error), { entryId: entry.id });
+      await prisma.dailyEntry.update({
+        where: { id: entry.id },
+        data: { status: EntryStatus.FLAGGED },
+      }).catch(() => undefined);
     }
   })();
 

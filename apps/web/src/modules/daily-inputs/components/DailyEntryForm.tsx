@@ -477,7 +477,7 @@ export function DailyEntryForm({ userId, departmentId, initialReportType = "DAIL
                       setValues((p) => ({ ...p, studentsInvolvedIds: selected.map((s) => s.id), studentsPresent: selected.length || undefined }));
                     }}
                     renderInput={(params) => {
-                      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                      // eslint-disable-next-line no-unused-vars
                       const { InputLabelProps: _ilp, ...rest } = params;
                       return (
                         <TextField

@@ -3,6 +3,8 @@ import { z } from "zod";
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   GROQ_API_KEY: z.string().min(1).optional(),
+  CRON_SECRET: z.string().min(1).optional(),
+  DEMO_PASSWORDS: z.string().optional(),
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),

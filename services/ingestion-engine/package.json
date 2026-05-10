@@ -11,6 +11,9 @@
     "@orgos/utils": "workspace:*",
     "zod": "^3.23.8"
   },
+  "scripts": {
+    "lint": "eslint src --ext .ts,.tsx"
+  },
   "devDependencies": {
     "typescript": "^5.4.5"
   }

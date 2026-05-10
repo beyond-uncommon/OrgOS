@@ -9,9 +9,16 @@
     "db:generate": "pnpm --filter @orgos/db generate",
     "db:migrate": "pnpm --filter @orgos/db migrate",
     "db:studio": "pnpm --filter @orgos/db studio",
-    "db:seed": "pnpm --filter @orgos/db seed"
+    "db:seed": "pnpm --filter @orgos/db seed",
+    "cron:daily": "CRON_SECRET=$(grep CRON_SECRET .env 2>/dev/null | cut -d= -f2) npx tsx scripts/run-cron.ts daily",
+    "cron:weekly": "CRON_SECRET=$(grep CRON_SECRET .env 2>/dev/null | cut -d= -f2) npx tsx scripts/run-cron.ts weekly",
+    "cron:monthly": "CRON_SECRET=$(grep CRON_SECRET .env 2>/dev/null | cut -d= -f2) npx tsx scripts/run-cron.ts monthly",
+    "cron:all": "CRON_SECRET=$(grep CRON_SECRET .env 2>/dev/null | cut -d= -f2) npx tsx scripts/run-cron.ts all"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
     "typescript": "^5.4.5"
   },
   "engines": {

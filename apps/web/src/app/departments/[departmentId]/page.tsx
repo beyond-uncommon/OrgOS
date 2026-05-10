@@ -1,7 +1,7 @@
 import { Box, Container, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import Link from "next/link";
-import { getDepartmentDashboard, getRecentAlerts, getWeeklyInsightSnapshot } from "@/modules/dashboards/queries";
+import { getDepartmentDashboard, getRecentAlerts, getWeeklyInsightSnapshot, getDepartmentDailyReports } from "@/modules/dashboards/queries";
 import { getPendingActionsForDepartment, getApproverByEmail } from "@/modules/approvals/queries";
 import { getDepartmentInstructors } from "@/modules/dashboards/instructor/queries";
 import { getYCHubSummary } from "@/modules/youth-coding/queries";
@@ -13,8 +13,9 @@ import { MetricsStrip } from "@/modules/dashboards/department/MetricsStrip";
 import { RisksPanel } from "@/modules/dashboards/department/RisksPanel";
 import { InsightNarrativePanel } from "@/modules/dashboards/department/InsightNarrativePanel";
 import { ApprovalQueuePanel } from "@/modules/dashboards/department/ApprovalQueuePanel";
+import { DailyReportsSummary } from "@/modules/dashboards/department/DailyReportsSummary";
 import type { InsightReport } from "@orgos/shared-types";
-import type { Alert } from "@orgos/db";
+import type { Alert as AlertModel } from "@orgos/db";
 
 const DEMO_APPROVER_EMAIL = "hublead@uncommon.org";
 
@@ -57,7 +58,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
     else redirect("/coming-soon");
   }
 
-  const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, approver, instructors, dept, ycSummary] = await Promise.all([
+  const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, approver, instructors, dept, ycSummary, dailyReports] = await Promise.all([
     getDepartmentDashboard(departmentId),
     getWeeklyInsightSnapshot(departmentId),
     getRecentAlerts(departmentId),
@@ -66,11 +67,12 @@ export default async function DepartmentDashboardPage({ params }: Props) {
     getDepartmentInstructors(departmentId),
     prisma.department.findUnique({ where: { id: departmentId }, select: { name: true } }),
     getYCHubSummary(departmentId),
+    getDepartmentDailyReports(departmentId),
   ]);
 
   const metricsData = dailySnapshot?.data as Record<string, unknown[]> | null;
   const insightReport = weeklySnapshot?.data as InsightReport | null;
-  const alerts = rawAlerts as Alert[];
+  const alerts = rawAlerts as AlertModel[];
   const hasRisks = alerts.length > 0;
 
   return (
@@ -143,7 +145,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
           <Grid size={{ xs: 12, lg: 8 }}>
             {/* Metrics strip */}
             <Box sx={{ mb: 4 }}>
-              <SectionLabel>Today's Operational Metrics</SectionLabel>
+              <SectionLabel>Today&apos;s Operational Metrics</SectionLabel>
               {metricsData ? (
                 <MetricsStrip data={metricsData} />
               ) : (
@@ -192,6 +194,20 @@ export default async function DepartmentDashboardPage({ params }: Props) {
                   <EmptyState message="No weekly insight generated yet. Submit entries to trigger analysis." />
                 )}
               </Box>
+            </Box>
+
+            {/* Daily Reports Summary */}
+            <Box sx={{ mt: 4 }}>
+              <SectionLabel>Daily Reports ({instructors.length} instructors)</SectionLabel>
+              {dailyReports.size > 0 ? (
+                <DailyReportsSummary grouped={dailyReports} />
+              ) : (
+                <Box sx={{ py: 4, textAlign: "center" }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    No daily reports submitted this week.
+                  </Typography>
+                </Box>
+              )}
             </Box>
 
             {/* Youth Coding Panel */}

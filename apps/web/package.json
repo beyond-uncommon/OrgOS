@@ -17,6 +17,7 @@
     "@mui/material": "^6.1.0",
     "@mui/x-charts": "^7.14.0",
     "@mui/x-data-grid": "^7.14.0",
+    "@orgos/anomaly-detection": "workspace:*",
     "@orgos/dashboard-engine": "workspace:*",
     "@orgos/db": "workspace:*",
     "@orgos/ingestion-engine": "workspace:*",
@@ -36,6 +37,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "eslint-config-next": "^14.2.35",
     "typescript": "^5.4.5"
   }
 }

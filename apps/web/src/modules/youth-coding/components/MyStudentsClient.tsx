@@ -3,7 +3,8 @@
 import { useState } from "react";
 import {
   Box, Container, Typography, Table, TableHead, TableRow, TableCell,
-  TableBody, TextField, IconButton, Select, MenuItem, Button, Stack,
+  TableBody, TableContainer, Paper,
+  TextField, IconButton, Select, MenuItem, Button, Stack,
 } from "@mui/material";
 import Link from "next/link";
 import { updateStudent } from "../actions/updateStudent";
@@ -117,69 +118,71 @@ export function MyStudentsClient({
               : "No students match the current filter."}
           </Typography>
         ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Age</TableCell>
-                <TableCell>Gender</TableCell>
-                <TableCell>School</TableCell>
-                <TableCell>Grade</TableCell>
-                <TableCell>Community</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filtered.map(s => (
-                <TableRow key={s.id}>
-                  {editing === s.id ? (
-                    <>
-                      <TableCell>
-                        <TextField size="small" value={draft.name ?? ""} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} />
-                      </TableCell>
-                      <TableCell>
-                        <TextField size="small" type="number" value={draft.age ?? ""} onChange={e => setDraft(d => ({ ...d, age: Number(e.target.value) }))} sx={{ width: 60 }} />
-                      </TableCell>
-                      <TableCell>
-                        <Select size="small" value={draft.gender ?? ""} onChange={e => setDraft(d => ({ ...d, gender: e.target.value }))}>
-                          <MenuItem value="M">M</MenuItem>
-                          <MenuItem value="F">F</MenuItem>
-                          <MenuItem value="Other">Other</MenuItem>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <TextField size="small" value={draft.school ?? ""} onChange={e => setDraft(d => ({ ...d, school: e.target.value }))} />
-                      </TableCell>
-                      <TableCell>
-                        <TextField size="small" value={draft.grade ?? ""} onChange={e => setDraft(d => ({ ...d, grade: e.target.value }))} sx={{ width: 80 }} />
-                      </TableCell>
-                      <TableCell>
-                        <TextField size="small" value={draft.community ?? ""} onChange={e => setDraft(d => ({ ...d, community: e.target.value }))} />
-                      </TableCell>
-                      <TableCell>{s.enrollmentStatus}</TableCell>
-                      <TableCell>
-                        <IconButton size="small" onClick={() => saveEdit(s.id)}>✓</IconButton>
-                      </TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell>{s.name}</TableCell>
-                      <TableCell>{s.age ?? "—"}</TableCell>
-                      <TableCell>{s.gender ?? "—"}</TableCell>
-                      <TableCell>{s.school ?? "—"}</TableCell>
-                      <TableCell>{s.grade ?? "—"}</TableCell>
-                      <TableCell>{s.community ?? "—"}</TableCell>
-                      <TableCell>{s.enrollmentStatus}</TableCell>
-                      <TableCell>
-                        <IconButton size="small" onClick={() => startEdit(s)}>✎</IconButton>
-                      </TableCell>
-                    </>
-                  )}
+          <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Age</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Gender</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>School</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Grade</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Community</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {filtered.map(s => (
+                  <TableRow key={s.id} sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                    {editing === s.id ? (
+                      <>
+                        <TableCell>
+                          <TextField size="small" value={draft.name ?? ""} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} />
+                        </TableCell>
+                        <TableCell>
+                          <TextField size="small" type="number" value={draft.age ?? ""} onChange={e => setDraft(d => ({ ...d, age: Number(e.target.value) }))} sx={{ width: 60 }} />
+                        </TableCell>
+                        <TableCell>
+                          <Select size="small" value={draft.gender ?? ""} onChange={e => setDraft(d => ({ ...d, gender: e.target.value }))}>
+                            <MenuItem value="M">M</MenuItem>
+                            <MenuItem value="F">F</MenuItem>
+                            <MenuItem value="Other">Other</MenuItem>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <TextField size="small" value={draft.school ?? ""} onChange={e => setDraft(d => ({ ...d, school: e.target.value }))} />
+                        </TableCell>
+                        <TableCell>
+                          <TextField size="small" value={draft.grade ?? ""} onChange={e => setDraft(d => ({ ...d, grade: e.target.value }))} sx={{ width: 80 }} />
+                        </TableCell>
+                        <TableCell>
+                          <TextField size="small" value={draft.community ?? ""} onChange={e => setDraft(d => ({ ...d, community: e.target.value }))} />
+                        </TableCell>
+                        <TableCell>{s.enrollmentStatus}</TableCell>
+                        <TableCell>
+                          <IconButton size="small" onClick={() => saveEdit(s.id)}>✓</IconButton>
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell>{s.name}</TableCell>
+                        <TableCell>{s.age ?? "—"}</TableCell>
+                        <TableCell>{s.gender ?? "—"}</TableCell>
+                        <TableCell>{s.school ?? "—"}</TableCell>
+                        <TableCell>{s.grade ?? "—"}</TableCell>
+                        <TableCell>{s.community ?? "—"}</TableCell>
+                        <TableCell>{s.enrollmentStatus}</TableCell>
+                        <TableCell>
+                          <IconButton size="small" onClick={() => startEdit(s)}>✎</IconButton>
+                        </TableCell>
+                      </>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </Container>
 

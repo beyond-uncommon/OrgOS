@@ -4,7 +4,8 @@ import { useState, useRef } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Alert, Table, TableHead,
-  TableRow, TableCell, TableBody, Chip, LinearProgress,
+  TableRow, TableCell, TableBody, TableContainer, Paper,
+  Chip, LinearProgress,
 } from "@mui/material";
 import { bulkRegisterStudents } from "../actions/bulkRegisterStudents";
 import type { StudentRegistrationInput } from "../schema";
@@ -180,17 +181,17 @@ export function CsvUploadDialog({ open, onClose, instructorId, departmentId, onC
                   />
                 </Box>
                 {uploading && <LinearProgress sx={{ mb: 2 }} />}
-                <Box sx={{ maxHeight: 320, overflow: "auto" }}>
+                <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 320, borderRadius: 2 }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Age</TableCell>
-                        <TableCell>Gender</TableCell>
-                        <TableCell>School</TableCell>
-                        <TableCell>Grade</TableCell>
-                        <TableCell>Community</TableCell>
-                        <TableCell />
+                        <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Age</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Gender</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>School</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Grade</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Community</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }} />
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -211,7 +212,7 @@ export function CsvUploadDialog({ open, onClose, instructorId, departmentId, onC
                       ))}
                     </TableBody>
                   </Table>
-                </Box>
+                </TableContainer>
               </>
             )}
           </>

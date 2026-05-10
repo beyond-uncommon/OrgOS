@@ -1,4 +1,17 @@
 import { prisma, Role, PeriodType } from "@orgos/db";
+import { getYCManagerMetrics } from "@/modules/youth-coding/queries";
+import { getWeeklyReportsByDepartment } from "@/modules/report-generation/queries";
+
+export type ProgramType = "YOUTH_CODING" | "BOOTCAMP" | "OUTREACH" | "TEACHER_TRAINING" | "UNKNOWN";
+
+export function detectProgramType(name: string): ProgramType {
+  const n = name.toLowerCase();
+  if (n.includes("youth coding")) return "YOUTH_CODING";
+  if (n.includes("bootcamp")) return "BOOTCAMP";
+  if (n.includes("outreach")) return "OUTREACH";
+  if (n.includes("teacher training")) return "TEACHER_TRAINING";
+  return "UNKNOWN";
+}
 
 export async function getProgramDashboardData(programDepartmentId: string) {
   const bootcamps = await prisma.department.findMany({
@@ -43,4 +56,24 @@ export async function getProgramDashboardData(programDepartmentId: string) {
   }
 
   return { bootcamps, bootcampManagers, hubsByBootcamp, latestSnapshot, alerts };
+}
+
+export async function getYCProgramData(programDepartmentId: string) {
+  // YC hubs are direct children of the program
+  const hubs = await prisma.department.findMany({
+    where: { parentDepartmentId: programDepartmentId },
+    select: { id: true, name: true },
+  });
+
+  const [metrics, weeklyReports, studentCount] = await Promise.all([
+    getYCManagerMetrics(programDepartmentId),
+    getWeeklyReportsByDepartment(programDepartmentId),
+    prisma.student.count({ where: { enrollmentStatus: "ACTIVE", departmentId: { in: [programDepartmentId, ...hubs.map(h => h.id)] } } }),
+  ]);
+
+  return { hubs, metrics, weeklyReports, studentCount };
+}
+
+export async function getProgramWeeklyReports(programDepartmentId: string) {
+  return getWeeklyReportsByDepartment(programDepartmentId);
 }

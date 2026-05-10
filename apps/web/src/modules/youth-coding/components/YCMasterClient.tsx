@@ -3,7 +3,8 @@
 import { useState, useMemo } from "react";
 import {
   Box, Container, Typography, Table, TableHead, TableRow, TableCell,
-  TableBody, Select, MenuItem, FormControl, InputLabel, Button, Tabs, Tab, Divider,
+  TableBody, TableContainer, Paper,
+  Select, MenuItem, FormControl, InputLabel, Button, Tabs, Tab, Divider,
 } from "@mui/material";
 import { UserBar } from "@/components/UserBar";
 
@@ -230,43 +231,45 @@ export function YCMasterClient({
               {filtered.length} of {hubStudents.length} students{selectedHub ? ` in ${selectedHubName}` : ""}
             </Typography>
 
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Age</TableCell>
-                  <TableCell>Gender</TableCell>
-                  <TableCell>School</TableCell>
-                  <TableCell>Grade</TableCell>
-                  <TableCell>Community</TableCell>
-                  <TableCell>Hub</TableCell>
-                  <TableCell>Coordinator</TableCell>
-                  <TableCell>Sessions</TableCell>
-                  <TableCell>Completion</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filtered.map(s => {
-                  const total = s.sessionAttendance.length;
-                  const complete = s.sessionAttendance.filter(a => a.projectStatus === "COMPLETE").length;
-                  const rate = total > 0 ? Math.round((complete / total) * 100) : 0;
-                  return (
-                    <TableRow key={s.id}>
-                      <TableCell>{s.name}</TableCell>
-                      <TableCell>{s.age ?? "—"}</TableCell>
-                      <TableCell>{s.gender ?? "—"}</TableCell>
-                      <TableCell>{s.school ?? "—"}</TableCell>
-                      <TableCell>{s.grade ?? "—"}</TableCell>
-                      <TableCell>{s.community ?? "—"}</TableCell>
-                      <TableCell>{s.department.name}</TableCell>
-                      <TableCell>{s.instructor.name}</TableCell>
-                      <TableCell>{total}</TableCell>
-                      <TableCell>{rate}%</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Age</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Gender</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>School</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Grade</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Community</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Hub</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Coordinator</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Sessions</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Completion</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filtered.map(s => {
+                    const total = s.sessionAttendance.length;
+                    const complete = s.sessionAttendance.filter(a => a.projectStatus === "COMPLETE").length;
+                    const rate = total > 0 ? Math.round((complete / total) * 100) : 0;
+                    return (
+                      <TableRow key={s.id} sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                        <TableCell>{s.name}</TableCell>
+                        <TableCell>{s.age ?? "—"}</TableCell>
+                        <TableCell>{s.gender ?? "—"}</TableCell>
+                        <TableCell>{s.school ?? "—"}</TableCell>
+                        <TableCell>{s.grade ?? "—"}</TableCell>
+                        <TableCell>{s.community ?? "—"}</TableCell>
+                        <TableCell>{s.department.name}</TableCell>
+                        <TableCell>{s.instructor.name}</TableCell>
+                        <TableCell>{total}</TableCell>
+                        <TableCell>{rate}%</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Box>
         )}
       </Container>
