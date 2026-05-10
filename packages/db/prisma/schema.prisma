@@ -53,6 +53,7 @@ model Department {
   weeklyReports       WeeklyReport[]
   youthCodingSessions YouthCodingSession[]
   attendanceSessions  AttendanceSession[]
+  fundingRecords      FundingRecord[]
 
   @@index([parentDepartmentId])
 }
@@ -396,6 +397,19 @@ model GovernanceAuditRecord {
   @@index([departmentId, createdAt])
   @@index([actionPlanId])
   @@index([forecastRunId])
+}
+
+model FundingRecord {
+  id          String   @id @default(cuid())
+  amount      Float
+  source      String
+  description String?
+  receivedAt  DateTime @db.Date
+  createdAt   DateTime @default(now())
+  programId   String?
+  program     Department? @relation(fields: [programId], references: [id])
+
+  @@index([receivedAt])
 }
 
 model AttendanceSession {

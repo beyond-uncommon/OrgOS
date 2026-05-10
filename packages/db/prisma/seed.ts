@@ -537,6 +537,24 @@ async function main() {
 
   console.log("✓ Seed complete.");
   console.log(`  Org tree: ${org.name} → [${progYC.name} | ${progOutreach.name} | ${progBootcamp.name} | ${progTeacherTraining.name}]`);
+  // ── Demo funding records ──────────────────────────────────────────────────
+  const fundingData: { amount: number; source: string; description: string; receivedAt: Date; programId?: string }[] = [
+    { amount: 250000, source: "Global Impact Grant", description: "Annual youth coding program grant", receivedAt: new Date(today.getFullYear(), 0, 15) },
+    { amount: 150000, source: "Corporate Sponsorship — TechCorp", description: "Bootcamp equipment and materials", receivedAt: new Date(today.getFullYear(), 2, 1), programId: progBootcamp.id },
+    { amount: 75000, source: "Individual Donor — Anonymous", description: "General operations support", receivedAt: new Date(today.getFullYear(), 3, 10) },
+    { amount: 50000, source: "Foundation Grant — Bright Future", description: "Teacher training program launch", receivedAt: new Date(today.getFullYear(), 4, 5), programId: progTeacherTraining.id },
+    { amount: 100000, source: "Government Partnership — Min of Education", description: "After-school coding initiative", receivedAt: new Date(today.getFullYear(), 5, 1), programId: progYC.id },
+    { amount: 30000, source: "Community Fundraiser", description: "Hub renovation and supplies", receivedAt: new Date(today.getFullYear(), 6, 20), programId: progYC.id },
+    { amount: 200000, source: "Corporate Sponsorship — DesignLabs", description: "Design bootcamp scholarship fund", receivedAt: new Date(today.getFullYear(), 8, 1), programId: progBootcamp.id },
+    { amount: 80000, source: "International Development Grant", description: "Outreach program expansion", receivedAt: new Date(today.getFullYear(), 9, 15), programId: progOutreach.id },
+    { amount: 45000, source: "Alumni Donation Pool", description: "Student supplies and transport", receivedAt: new Date(today.getFullYear(), 10, 1) },
+    { amount: 120000, source: "Matching Gift Campaign", description: "Year-end fundraising drive match", receivedAt: new Date(today.getFullYear(), 11, 20) },
+  ];
+
+  for (const f of fundingData) {
+    await prisma.fundingRecord.create({ data: f });
+  }
+
   console.log(`  Bootcamp path: ${progBootcamp.name} → ${bootcamp.name} → ${hub1.name} / ${hub2.name} / ${hub3.name}`);
   console.log(`  YC Hubs: ${ycHub1.name} / ${ycHub2.name} / ${ycHub3.name}`);
   console.log(`  Instructors: ${allInstructors.length} (5 per hub)`);
