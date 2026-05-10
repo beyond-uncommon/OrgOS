@@ -5,8 +5,8 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   experimental: {
-    outputFileTracingRoot: path.join(__dirname, "../../"),
     outputFileTracingIncludes: {
       "/**": ["./.prisma/client/*.node"],
     },
