@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyCronRequest } from "@/lib/cron/auth";
 import { getDepartmentsWithInstructors } from "@/lib/cron/departments";
+import type { InsightReport } from "@orgos/shared-types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -20,10 +21,25 @@ export async function POST(request: Request) {
   const month = now.getMonth() + 1;
 
   for (const dept of departments) {
-    // Monthly report (LLM-generated, requires approved weekly reports)
+    // Monthly insights first (structured analysis → dashboard snapshot)
+    let insightReport: InsightReport | undefined;
+    try {
+      const { generateMonthlyInsights } = await import("@orgos/insight-engine");
+      const insightResult = await generateMonthlyInsights(dept.id, year, month);
+      if (insightResult.success) {
+        insightReport = insightResult.data;
+        results.push(`[${dept.name}] MonthlyInsights created`);
+      } else {
+        results.push(`[${dept.name}] MonthlyInsights skipped: ${insightResult.error}`);
+      }
+    } catch (err) {
+      errors.push(`[${dept.name}] MonthlyInsights failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    // Monthly report (LLM-generated narrative, enriched with insights if available)
     try {
       const { generateMonthlyReport } = await import("@orgos/report-generator");
-      const reportResult = await generateMonthlyReport(dept.id, year, month);
+      const reportResult = await generateMonthlyReport(dept.id, year, month, insightReport);
       if (reportResult.success) {
         results.push(`[${dept.name}] MonthlyReport created`);
       } else {
@@ -31,19 +47,6 @@ export async function POST(request: Request) {
       }
     } catch (err) {
       errors.push(`[${dept.name}] MonthlyReport failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-
-    // Monthly insights (structured analysis → dashboard snapshot)
-    try {
-      const { generateMonthlyInsights } = await import("@orgos/insight-engine");
-      const insightResult = await generateMonthlyInsights(dept.id, year, month);
-      if (insightResult.success) {
-        results.push(`[${dept.name}] MonthlyInsights created`);
-      } else {
-        results.push(`[${dept.name}] MonthlyInsights skipped: ${insightResult.error}`);
-      }
-    } catch (err) {
-      errors.push(`[${dept.name}] MonthlyInsights failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

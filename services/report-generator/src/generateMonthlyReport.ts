@@ -2,7 +2,7 @@ import Groq from "groq-sdk";
 import { prisma, ReportStatus } from "@orgos/db";
 import { env } from "@orgos/utils";
 import type { ActionResult } from "@orgos/utils";
-import type { MonthlyReport } from "@orgos/shared-types";
+import type { MonthlyReport, InsightReport } from "@orgos/shared-types";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -11,7 +11,8 @@ const PROMPT_VERSION = "monthly-summary-v1";
 export async function generateMonthlyReport(
   departmentId: string,
   year: number,
-  month: number
+  month: number,
+  insightReport?: InsightReport,
 ): Promise<ActionResult<MonthlyReport>> {
   const existing = await prisma.monthlyReport.findUnique({
     where: { departmentId_periodYear_periodMonth: { departmentId, periodYear: year, periodMonth: month } },
@@ -45,15 +46,23 @@ export async function generateMonthlyReport(
   );
 
   const client = new Groq({ apiKey: env.GROQ_API_KEY });
+  let promptContent = `Generate a monthly report for department ${departmentId} for ${year}-${String(month).padStart(2, "0")}.\n\nWeekly reports:\n${JSON.stringify(weeklyReports, null, 2)}`;
+
+  if (insightReport) {
+    promptContent += `\n\nStructured insights from the intelligence layer:\n${JSON.stringify({
+      summary: insightReport.summary,
+      insights: insightReport.insights,
+      risks: insightReport.risks,
+      recommendations: insightReport.recommendations,
+    }, null, 2)}`;
+  }
+
   const response = await client.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     max_tokens: 4096,
     messages: [
       { role: "system", content: systemPrompt },
-      {
-        role: "user",
-        content: `Generate a monthly report for department ${departmentId} for ${year}-${String(month).padStart(2, "0")}.\n\nWeekly reports:\n${JSON.stringify(weeklyReports, null, 2)}`,
-      },
+      { role: "user", content: promptContent },
     ],
   });
 

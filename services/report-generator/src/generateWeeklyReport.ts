@@ -2,7 +2,7 @@ import Groq from "groq-sdk";
 import { prisma, ReportStatus } from "@orgos/db";
 import { getWeekBounds, env } from "@orgos/utils";
 import type { ActionResult } from "@orgos/utils";
-import type { WeeklyReport } from "@orgos/shared-types";
+import type { WeeklyReport, InsightReport } from "@orgos/shared-types";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -10,7 +10,8 @@ const PROMPT_VERSION = "weekly-summary-v1";
 
 export async function generateWeeklyReport(
   departmentId: string,
-  weekOf: Date
+  weekOf: Date,
+  insightReport?: InsightReport,
 ): Promise<ActionResult<WeeklyReport>> {
   const { weekStart, weekEnd } = getWeekBounds(weekOf);
 
@@ -21,7 +22,6 @@ export async function generateWeeklyReport(
     return { success: false, error: "Weekly report already exists for this period." };
   }
 
-  // Gather all extracted metrics for the department over the week
   const metrics = await prisma.extractedMetric.findMany({
     where: {
       entry: { departmentId, date: { gte: weekStart, lte: weekEnd } },
@@ -34,16 +34,24 @@ export async function generateWeeklyReport(
     "utf-8"
   );
 
+  let promptContent = `Generate a weekly report for department ${departmentId} for the week of ${weekStart.toISOString()}.\n\nMetrics data:\n${JSON.stringify(metrics, null, 2)}`;
+
+  if (insightReport) {
+    promptContent += `\n\nStructured insights from the intelligence layer:\n${JSON.stringify({
+      summary: insightReport.summary,
+      insights: insightReport.insights,
+      risks: insightReport.risks,
+      recommendations: insightReport.recommendations,
+    }, null, 2)}`;
+  }
+
   const client = new Groq({ apiKey: env.GROQ_API_KEY });
   const response = await client.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     max_tokens: 2048,
     messages: [
       { role: "system", content: systemPrompt },
-      {
-        role: "user",
-        content: `Generate a weekly report for department ${departmentId} for the week of ${weekStart.toISOString()}.\n\nMetrics data:\n${JSON.stringify(metrics, null, 2)}`,
-      },
+      { role: "user", content: promptContent },
     ],
   });
 
@@ -64,7 +72,7 @@ export async function generateWeeklyReport(
       generatedContent: generated,
       generatedMetrics: aggregatedMetrics as object,
       risks: {},
-      originalContent: generated, // preserved forever
+      originalContent: generated,
       editLog: [],
       promptVersion: PROMPT_VERSION,
     },
