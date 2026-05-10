@@ -1,4 +1,4 @@
-import type { InsightPattern, AnomalyResult } from "@orgos/shared-types";
+import type { InsightPattern, AnomalyResult, MetricKey } from "@orgos/shared-types";
 import type { AnomalyGroup } from "../aggregators/anomalyAggregator.js";
 import type { MetricTrendSummary } from "../aggregators/metricTrendAggregator.js";
 
@@ -90,7 +90,7 @@ function detectInstabilityPatterns(
   // High volatility + anomalies on same metric = instability
   return trends
     .filter((t) => {
-      const hasAnomalies = (groups.byMetricKey[t.metricKey] ?? []).length >= 2;
+      const hasAnomalies = (groups.byMetricKey[t.metricKey as MetricKey] ?? []).length >= 2;
       return t.volatility > 0.5 && hasAnomalies;
     })
     .map((t) => ({
