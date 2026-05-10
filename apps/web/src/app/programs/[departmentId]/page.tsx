@@ -40,8 +40,8 @@ export default async function ProgramDashboardPage({ params }: Props) {
   if (!sessionUser) redirect("/login");
 
   const role = sessionUser.role;
-  const programManagerRoles = new Set(["PROGRAM_MANAGER", "YOUTH_CODING_MANAGER", "BOOTCAMP_MANAGER", "TEACHER_TRAINING_COORDINATOR"]);
-  if (programManagerRoles.has(role)) redirect("/programs");
+  if (role === "BOOTCAMP_MANAGER") redirect(`/bootcamps/${sessionUser.departmentId}`);
+  if (role === "PROGRAM_MANAGER" || role === "YOUTH_CODING_MANAGER" || role === "TEACHER_TRAINING_COORDINATOR") redirect("/programs");
   if (!["ADMIN", "COUNTRY_DIRECTOR"].includes(role)) {
     if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
     else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);

@@ -11,6 +11,7 @@ export function redirectByRole(
     case "HUB_LEAD":
       redirect(`/departments/${departmentId}`);
     case "BOOTCAMP_MANAGER":
+      redirect(`/bootcamps/${departmentId}`);
     case "YOUTH_CODING_MANAGER":
     case "TEACHER_TRAINING_COORDINATOR":
     case "PROGRAM_MANAGER":

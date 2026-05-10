@@ -28,7 +28,7 @@ export default async function ProgramsOverviewPage() {
   if (!sessionUser) redirect("/login");
 
   const role = sessionUser.role;
-  const allowed = new Set(["PROGRAM_MANAGER", "ADMIN", "COUNTRY_DIRECTOR", "YOUTH_CODING_MANAGER", "BOOTCAMP_MANAGER", "TEACHER_TRAINING_COORDINATOR"]);
+  const allowed = new Set(["PROGRAM_MANAGER", "ADMIN", "COUNTRY_DIRECTOR", "YOUTH_CODING_MANAGER", "TEACHER_TRAINING_COORDINATOR"]);
   if (!allowed.has(role)) {
     if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
     else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
