@@ -92,3 +92,33 @@ export async function recordCheckIn(sessionId: string, studentId: string) {
   revalidatePath("/yc/attendance");
   return { ok: true } as const;
 }
+
+export async function addWalkInStudent(sessionId: string, departmentId: string, name: string) {
+  const ip = await getClientIP();
+  const session = await prisma.attendanceSession.findUnique({ where: { id: sessionId } });
+
+  if (!session) return { ok: false, error: "Session not found" } as const;
+  if (session.deviceIP && ip && session.deviceIP !== ip) {
+    return { ok: false, error: "Unauthorized device" } as const;
+  }
+
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false, error: "Name is required" } as const;
+
+  const instructor = await prisma.user.findFirst({
+    where: { departmentId, role: "INSTRUCTOR" },
+    select: { id: true },
+  });
+  if (!instructor) return { ok: false, error: "No instructor found for this hub" } as const;
+
+  const student = await prisma.student.create({
+    data: { name: trimmed, departmentId, instructorId: instructor.id },
+  });
+
+  await prisma.attendanceRecord.create({
+    data: { sessionId, studentId: student.id },
+  });
+
+  revalidatePath("/yc/attendance");
+  return { ok: true, student: { id: student.id, name: student.name } } as const;
+}

@@ -2,7 +2,7 @@ import { prisma } from "@orgos/db";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { CheckInPanel } from "@/modules/youth-coding/components/CheckInPanel";
-import { Box, Container, Typography } from "@mui/material";
+import { Box, Container, Typography, Collapse, Button } from "@mui/material";
 import { getOrCreateTodaySession } from "@/modules/youth-coding/actions/markHubAttendance";
 
 interface Props {
@@ -28,49 +28,43 @@ export default async function HubAttendancePage({ params }: Props) {
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const checkinUrl = `${baseUrl}/yc/checkin?token=${session.token}`;
-  const qrSvg = await QRCode.toString(checkinUrl, { type: "svg", margin: 2, width: 300 });
+  const qrSvg = await QRCode.toString(checkinUrl, { type: "svg", margin: 2, width: 200 });
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
       <Box sx={{ borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
-        <Container maxWidth="sm">
-          <Box sx={{ py: 2, textAlign: "center" }}>
-            <Typography variant="h6" sx={{ letterSpacing: "-0.01em" }}>
-              {department.name}
-            </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </Typography>
+        <Container maxWidth="md">
+          <Box sx={{ py: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box>
+              <Typography variant="h6" sx={{ letterSpacing: "-0.01em", lineHeight: 1.2 }}>
+                {department.name}
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Box
+                sx={{ display: "inline-block", bgcolor: "white", p: 0.5, borderRadius: 1, border: "1px solid", borderColor: "divider", lineHeight: 0 }}
+                dangerouslySetInnerHTML={{ __html: qrSvg }}
+              />
+              <Typography variant="caption" display="block" sx={{ mt: 0.3, color: "text.disabled", fontSize: "0.6rem" }}>
+                QR setup
+              </Typography>
+            </Box>
           </Box>
         </Container>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Box sx={{ textAlign: "center", mb: 4 }}>
-          <Box
-            sx={{
-              display: "inline-block",
-              bgcolor: "white",
-              p: 2,
-              borderRadius: 2,
-              border: "1px solid",
-              borderColor: "divider",
-            }}
-            dangerouslySetInnerHTML={{ __html: qrSvg }}
-          />
-          <Typography variant="caption" display="block" sx={{ mt: 1, color: "text.secondary" }}>
-            Scan to check in from your phone
-          </Typography>
-        </Box>
-
+      <Container maxWidth="md" sx={{ py: 3 }}>
         <CheckInPanel
           sessionId={session.id}
-          sessionToken={session.token}
+          departmentId={departmentId}
           deviceIP={session.deviceIP}
           students={students}
           initialRecords={session.records.map(r => ({
