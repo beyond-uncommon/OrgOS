@@ -27,6 +27,7 @@ model Student {
   department        Department          @relation(fields: [departmentId], references: [id])
   instructor        User                @relation("InstructorStudents", fields: [instructorId], references: [id])
   sessionAttendance SessionAttendance[]
+  reports           StudentReport[]
 
   @@index([instructorId])
   @@index([departmentId])
@@ -358,6 +359,22 @@ model SessionAttendance {
   @@unique([sessionId, studentId])
   @@index([sessionId])
   @@index([studentId])
+}
+
+model StudentReport {
+  id        String   @id @default(cuid())
+  studentId String
+  date      DateTime @db.Date
+  learned   String
+  enjoyed   String
+  struggled String?
+  rating    Int                  @default(3)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  student   Student              @relation(fields: [studentId], references: [id])
+
+  @@index([studentId, date])
+  @@index([date])
 }
 
 model GovernanceAuditRecord {

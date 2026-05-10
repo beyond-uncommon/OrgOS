@@ -57,3 +57,45 @@ export async function getDepartmentInstructors(departmentId: string) {
     orderBy: { name: "asc" },
   });
 }
+
+export async function getStudentReportsForInstructor(instructorId: string, days = 7) {
+  const from = new Date();
+  from.setDate(from.getDate() - days);
+  from.setHours(0, 0, 0, 0);
+
+  return prisma.studentReport.findMany({
+    where: {
+      student: { instructorId },
+      date: { gte: from },
+    },
+    include: {
+      student: { select: { name: true } },
+    },
+    orderBy: { date: "desc" },
+  });
+}
+
+export async function getYCSessionsForInstructor(instructorId: string, days = 7) {
+  const from = new Date();
+  from.setDate(from.getDate() - days);
+  from.setHours(0, 0, 0, 0);
+
+  const sessions = await prisma.youthCodingSession.findMany({
+    where: { date: { gte: from } },
+    include: {
+      attendance: {
+        include: {
+          student: { select: { id: true, name: true } },
+        },
+      },
+      submittedBy: { select: { id: true, name: true } },
+      department: { select: { id: true, name: true } },
+    },
+    orderBy: { date: "desc" },
+  });
+
+  return sessions.filter((s) => {
+    const ids = s.instructorIds as string[] | null;
+    return ids?.includes(instructorId) ?? false;
+  });
+}

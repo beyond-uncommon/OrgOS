@@ -8,6 +8,7 @@ export type {
   Alert,
   Intervention,
   DashboardSnapshot,
+  StudentReport,
 } from "@orgos/db";
 
 export {

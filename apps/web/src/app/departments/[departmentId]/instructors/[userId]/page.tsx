@@ -8,9 +8,13 @@ import {
   getInstructorDailyEntries,
   getInstructorAlerts,
   getStudentsForInstructor,
+  getStudentReportsForInstructor,
+  getYCSessionsForInstructor,
 } from "@/modules/dashboards/instructor/queries";
 import { getYCInstructorSummary } from "@/modules/youth-coding/queries";
 import { YCPanel } from "@/modules/youth-coding/components/YCPanel";
+import { InstructorYCSessionsPanel } from "@/modules/youth-coding/components/InstructorYCSessionsPanel";
+import { StudentReportsPanel } from "@/modules/youth-coding/components/StudentReportsPanel";
 import { InstructorTabs } from "@/modules/dashboards/instructor/InstructorTabs";
 import { UserBar } from "@/components/UserBar";
 import { RequestEditButton } from "@/modules/daily-inputs/components/RequestEditButton";
@@ -84,12 +88,14 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default async function InstructorPage({ params }: Props) {
   const { departmentId, userId } = await params;
 
-  const [instructor, entries, rawAlerts, students, ycSummary] = await Promise.all([
+  const [instructor, entries, rawAlerts, students, ycSummary, studentReports, ycSessions] = await Promise.all([
     getInstructorProfile(userId),
     getInstructorDailyEntries(userId, 30),
     getInstructorAlerts(userId),
     getStudentsForInstructor(userId),
     getYCInstructorSummary(userId),
+    getStudentReportsForInstructor(userId, 7),
+    getYCSessionsForInstructor(userId, 7),
   ]);
 
   const studentMap = new Map(students.map((s) => [s.id, s.name]));
@@ -221,6 +227,16 @@ export default async function InstructorPage({ params }: Props) {
         label="Youth Coding (This Week)"
       />
 
+      {ycSessions.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <SectionLabel>Recent YC Sessions</SectionLabel>
+          <InstructorYCSessionsPanel sessions={ycSessions.map(s => ({
+            ...s,
+            date: new Date(s.date),
+          }))} />
+        </Box>
+      )}
+
       {/* Gender breakdown */}
       {genderBreakdown && (
         <Box sx={{ mb: 4 }}>
@@ -336,6 +352,17 @@ export default async function InstructorPage({ params }: Props) {
           </Box>
         </Box>
       )}
+    </Box>
+  );
+
+  const studentReportsTab = (
+    <Box>
+      <SectionLabel>Student Feedback</SectionLabel>
+      <StudentReportsPanel reports={studentReports.map(r => ({
+        ...r,
+        date: new Date(r.date),
+        student: r.student,
+      }))} />
     </Box>
   );
 
@@ -750,6 +777,7 @@ export default async function InstructorPage({ params }: Props) {
               tabs={[
                 { label: "Metrics", content: metricsTab },
                 { label: "History", content: historyTab },
+                { label: "Student Reports", content: studentReportsTab },
               ]}
             />
           </Grid>

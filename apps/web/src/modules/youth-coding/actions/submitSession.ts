@@ -1,7 +1,8 @@
 "use server";
 
-import { prisma, ProjectStatus } from "@orgos/db";
+import { prisma, ProjectStatus, EntryStatus } from "@orgos/db";
 import type { ActionResult } from "@orgos/utils";
+import { toDateOnly } from "@orgos/utils";
 import { sessionSubmissionSchema } from "../schema";
 
 export async function submitSession(
@@ -59,7 +60,7 @@ export async function submitSession(
         })),
       ];
 
-      return tx.youthCodingSession.create({
+      const session = await tx.youthCodingSession.create({
         data: {
           date: new Date(phase1.date),
           lessonNumber: phase1.lessonNumber,
@@ -78,6 +79,38 @@ export async function submitSession(
         },
         select: { id: true },
       });
+
+      // Auto-generate DailyEntry from session data
+      const sessionDate = toDateOnly(new Date(phase1.date));
+      const totalStudents = presentAttendance.length;
+      const completedCount = presentAttendance.filter(a => a.projectStatus === "COMPLETE").length;
+      const totalEnrolled = attendance.length + newStudentIds.length;
+
+      const existingEntry = await tx.dailyEntry.findUnique({
+        where: { userId_date: { userId: submittedById, date: sessionDate } },
+      });
+
+      if (!existingEntry) {
+        await tx.dailyEntry.create({
+          data: {
+            userId: submittedById,
+            departmentId,
+            date: sessionDate,
+            status: EntryStatus.COMPLETE,
+            reportType: "SESSION",
+            attendanceStatus: `${totalStudents} of ${totalEnrolled} present`,
+            outputCompleted: `${completedCount} of ${totalStudents} projects completed`,
+            blockers: "",
+            engagementNotes: "",
+            quickSummary: `YC Session ${phase1.lessonNumber}: ${phase1.projectName} at ${phase1.school}`,
+            totalStudents: totalEnrolled,
+            studentsPresent: totalStudents,
+            studentsInvolvedIds: presentAttendance.map(a => a.studentId),
+          },
+        });
+      }
+
+      return { id: session.id };
     });
 
     return { success: true, data: result };
