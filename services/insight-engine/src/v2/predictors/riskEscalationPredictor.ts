@@ -7,7 +7,7 @@ const SEVERITY_ORDER: Severity[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 function escalate(current: Severity, steps = 1): Severity {
   const idx = Math.min(SEVERITY_ORDER.indexOf(current) + steps, SEVERITY_ORDER.length - 1);
-  return SEVERITY_ORDER[idx];
+  return SEVERITY_ORDER[idx]!;
 }
 
 /**

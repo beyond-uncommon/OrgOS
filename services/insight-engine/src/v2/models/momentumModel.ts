@@ -15,8 +15,8 @@ export function initSmoothedState(values: number[]): SmoothedState {
     return { level: values[0] ?? 0, trend: 0 };
   }
   return {
-    level: values[0],
-    trend: values[1] - values[0],
+    level: values[0]!,
+    trend: values[1]! - values[0]!,
   };
 }
 
@@ -46,7 +46,7 @@ export function forecast(values: number[], stepsAhead: number, alpha = 0.3, beta
   const prevTrend = state.trend;
 
   for (let i = 1; i < values.length; i++) {
-    state = smoothStep(state, values[i], alpha, beta);
+    state = smoothStep(state, values[i]!, alpha, beta);
   }
 
   const acceleration = state.trend - prevTrend;

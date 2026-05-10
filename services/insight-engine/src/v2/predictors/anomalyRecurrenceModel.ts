@@ -20,10 +20,10 @@ export function predictAnomalyRecurrence(
   const groups = buildRecurrenceGroups(anomalyHistory);
 
   return groups
-    .filter((g) => g.occurrenceDates.length >= 2) // need at least 2 occurrences to model recurrence
+    .filter((g) => g.occurrenceDates.length >= 2)
     .map((g) => ({
       anomalyType: g.anomalyType,
-      metricKey: g.metricKey,
+      ...(g.metricKey !== undefined ? { metricKey: g.metricKey } : {}),
       probabilityNext7Days:  round(recurrenceProbability(g.occurrenceDates, referenceDate, 7)),
       probabilityNext30Days: round(recurrenceProbability(g.occurrenceDates, referenceDate, 30)),
       historicalFrequency:   historicalFrequency(g.occurrenceDates, referenceDate),
@@ -37,7 +37,7 @@ function buildRecurrenceGroups(anomalies: AnomalyResult[]): RecurrenceGroup[] {
     const key = `${a.anomalyType}|${a.metricKey ?? ""}`;
     const group = map.get(key) ?? {
       anomalyType: a.anomalyType,
-      metricKey: a.metricKey,
+      ...(a.metricKey !== undefined ? { metricKey: a.metricKey } : {}),
       occurrenceDates: [],
     };
     group.occurrenceDates.push(a.detectedAt);

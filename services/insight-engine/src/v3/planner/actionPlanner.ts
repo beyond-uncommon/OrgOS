@@ -30,7 +30,7 @@ export function planAction(
   // ESCALATE overrides execution mode — escalations always require human approval
   const executionMode = decision.type === "ESCALATE" ? "HUMAN_APPROVAL" : base.executionMode;
 
-  const expiresAt = new Date(Date.now() + (URGENCY_TTL_MS[base.urgency] ?? URGENCY_TTL_MS["7D"]));
+  const expiresAt = new Date(Date.now() + (URGENCY_TTL_MS[base.urgency]!));
 
   return {
     ...base,

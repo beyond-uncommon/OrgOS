@@ -27,16 +27,24 @@ export async function buildInsightContext(
     .filter((a) => a.metadata != null)
     .map((a) => {
       const meta = a.metadata as Record<string, unknown>;
+      const anomalyType = (meta.anomalyType ?? "SPIKE") as AnomalyType;
+      const metricKey = meta.metricKey as MetricKey | undefined;
+      const entryId = meta.entryId as string | undefined;
+      const userId = meta.userId as string | undefined;
+      const detectionWindow = meta.detectionWindow as string | undefined;
+      const consecutiveDays = meta.consecutiveDays as number | undefined;
+      const description = (meta.description as string) ?? "";
+      const detectedAt = new Date(meta.detectedAt as string);
       return {
-        anomalyType: (meta.anomalyType ?? "SPIKE") as AnomalyType,
-        metricKey: meta.metricKey as MetricKey | undefined,
-        entryId: meta.entryId as string | undefined,
-        userId: meta.userId as string | undefined,
+        anomalyType,
+        ...(metricKey !== undefined ? { metricKey } : {}),
+        ...(entryId !== undefined ? { entryId } : {}),
+        ...(userId !== undefined ? { userId } : {}),
         departmentId,
-        description: (meta.description as string) ?? "",
-        detectedAt: new Date(meta.detectedAt as string),
-        detectionWindow: meta.detectionWindow as string | undefined,
-        consecutiveDays: meta.consecutiveDays as number | undefined,
+        description,
+        detectedAt,
+        ...(detectionWindow !== undefined ? { detectionWindow } : {}),
+        ...(consecutiveDays !== undefined ? { consecutiveDays } : {}),
       };
     });
 
@@ -44,7 +52,7 @@ export async function buildInsightContext(
     e.extractedMetrics.map((m) => ({
       metricKey: m.metricKey,
       metricValue: m.metricValue,
-      extractedAt: m.extractedAt,
+      extractedAt: m.createdAt,
       userId: e.userId,
     }))
   );

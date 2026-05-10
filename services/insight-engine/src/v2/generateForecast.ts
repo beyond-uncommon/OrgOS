@@ -37,6 +37,7 @@ export async function generateForecast(input: GenerateForecastInput): Promise<In
         metricKey: e.metricKey ?? "",
         metricValue: null as unknown,
         extractedAt: e.detectedAt,
+        userId: "",
       }))
     );
     const valueSeries = buildValueSeries(evidenceMetrics);

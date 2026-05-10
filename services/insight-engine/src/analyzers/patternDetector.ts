@@ -90,14 +90,14 @@ function detectInstabilityPatterns(
   // High volatility + anomalies on same metric = instability
   return trends
     .filter((t) => {
-      const hasAnomalies = (groups.byMetricKey[t.metricKey as never] ?? []).length >= 2;
+      const hasAnomalies = (groups.byMetricKey[t.metricKey] ?? []).length >= 2;
       return t.volatility > 0.5 && hasAnomalies;
     })
     .map((t) => ({
       type: "TREND" as const,
       severity: "MEDIUM" as const,
       description: `${t.metricKey} shows high volatility (σ=${t.volatility.toFixed(2)}) with repeated anomalies — unstable signal`,
-      evidence: groups.byMetricKey[t.metricKey as never] ?? [],
+      evidence: groups.byMetricKey[t.metricKey as MetricKey] ?? [],
     }));
 }
 

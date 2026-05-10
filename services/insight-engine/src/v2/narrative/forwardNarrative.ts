@@ -61,9 +61,6 @@ export async function generateForwardNarrative(input: ForwardNarrativeInput): Pr
     ],
   });
 
-  return response.content
-    .filter((b) => b.type === "text")
-    .map((b) => (b as { type: "text"; text: string }).text)
-    .join("\n")
-    .trim();
+  const message = response.choices[0]?.message?.content ?? "";
+  return message.trim();
 }

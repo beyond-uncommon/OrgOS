@@ -17,7 +17,7 @@ export async function enqueueForApproval(plan: ActionPlan): Promise<string> {
       urgency:       plan.urgency,
       executionMode: plan.executionMode,
       rationale:     plan.rationale,
-      payload:       plan.payload,
+      payload:       plan.payload as object,
       forecastRunId: plan.forecastRunId,
       expiresAt:     plan.expiresAt,
     },

@@ -30,7 +30,7 @@ export async function executeAutomatedAction(plan: ActionPlan): Promise<void> {
           data: {
             type:         "BASELINE_RECORD",
             forecastRunId: plan.forecastRunId,
-            payload:       plan.payload,
+            payload:       plan.payload as object,
           },
         },
       });
