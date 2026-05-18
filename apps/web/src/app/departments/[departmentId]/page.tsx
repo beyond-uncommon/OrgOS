@@ -4,6 +4,8 @@ import Link from "next/link";
 import { getDepartmentDashboard, getRecentAlerts, getWeeklyInsightSnapshot, getDepartmentDailyReports } from "@/modules/dashboards/queries";
 import { getPendingActionsForDepartment } from "@/modules/approvals/queries";
 import { getDepartmentInstructors } from "@/modules/dashboards/instructor/queries";
+import { getTodaySubmissionStatus } from "@/modules/dashboards/submissionTracker";
+import { SubmissionTracker } from "@/modules/dashboards/department/SubmissionTracker";
 import { getYCHubSummary } from "@/modules/youth-coding/queries";
 import { YCPanel } from "@/modules/youth-coding/components/YCPanel";
 import { getSessionUser } from "@/lib/auth/session";
@@ -21,9 +23,16 @@ interface Props {
   params: Promise<{ departmentId: string }>;
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionLabel({ children, primary = false }: { children: React.ReactNode; primary?: boolean }) {
   return (
-    <Typography component="p" variant="overline" sx={{ color: "text.secondary", mb: 2 }}>
+    <Typography
+      component="p"
+      variant="overline"
+      sx={primary
+        ? { color: "text.primary", mb: 2, fontWeight: 600, letterSpacing: "0.1em" }
+        : { color: "text.secondary", mb: 2 }
+      }
+    >
       {children}
     </Typography>
   );
@@ -62,7 +71,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
     redirect(`/departments/${user.departmentId}`);
   }
 
-  const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, instructors, dept, ycSummary, dailyReports] = await Promise.all([
+  const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, instructors, dept, ycSummary, dailyReports, submissionStatus] = await Promise.all([
     getDepartmentDashboard(departmentId),
     getWeeklyInsightSnapshot(departmentId),
     getRecentAlerts(departmentId),
@@ -71,6 +80,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
     prisma.department.findUnique({ where: { id: departmentId }, select: { name: true } }),
     getYCHubSummary(departmentId),
     getDepartmentDailyReports(departmentId),
+    getTodaySubmissionStatus(departmentId),
   ]);
 
   const metricsData = dailySnapshot?.data as Record<string, unknown[]> | null;
@@ -127,6 +137,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
                       borderRadius: "50%",
                       bgcolor: "error.main",
                       boxShadow: "0 0 6px var(--mui-palette-error-main)",
+                      animation: "pulse-dot 1.8s ease-in-out infinite",
                     }}
                   />
                   <Typography variant="overline" sx={{ color: "error.main" }}>
@@ -148,7 +159,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
           <Grid size={{ xs: 12, lg: 8 }}>
             {/* Metrics strip */}
             <Box sx={{ mb: 4 }}>
-              <SectionLabel>Today&apos;s Operational Metrics</SectionLabel>
+              <SectionLabel primary>Today&apos;s Operational Metrics</SectionLabel>
               {metricsData ? (
                 <MetricsStrip data={metricsData} />
               ) : (
@@ -281,9 +292,20 @@ export default async function DepartmentDashboardPage({ params }: Props) {
           {/* Right sidebar — 4 columns */}
           <Grid size={{ xs: 12, lg: 4 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {/* Submission tracker */}
+              <Box>
+                <SectionLabel>Today&apos;s Submissions</SectionLabel>
+                <SubmissionTracker
+                  statuses={submissionStatus.statuses}
+                  submitted={submissionStatus.submitted}
+                  total={submissionStatus.total}
+                  completionRate={submissionStatus.completionRate}
+                />
+              </Box>
+
               {/* Risk signals */}
               <Box>
-                <SectionLabel>Risk Signals</SectionLabel>
+                <SectionLabel primary>Risk Signals</SectionLabel>
                 <RisksPanel alerts={alerts} />
               </Box>
 

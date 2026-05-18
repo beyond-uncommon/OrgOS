@@ -2,9 +2,11 @@
  * Cron runner — triggers pipeline jobs locally via the dev server API.
  *
  * Usage:
- *   CRON_SECRET="..." npx tsx scripts/run-cron.ts daily
+*   CRON_SECRET="..." npx tsx scripts/run-cron.ts daily
  *   CRON_SECRET="..." npx tsx scripts/run-cron.ts weekly
  *   CRON_SECRET="..." npx tsx scripts/run-cron.ts monthly
+ *   CRON_SECRET="..." npx tsx scripts/run-cron.ts reminder
+ *   CRON_SECRET="..." npx tsx scripts/run-cron.ts missed
  *   CRON_SECRET="..." npx tsx scripts/run-cron.ts all
  *
  * Requires the Next.js dev server running on http://localhost:3000
@@ -19,12 +21,12 @@ if (!SECRET) {
   process.exit(1);
 }
 
-if (!JOB || !["daily", "weekly", "monthly", "all"].includes(JOB)) {
-  console.error("Usage: CRON_SECRET=... npx tsx scripts/run-cron.ts [daily|weekly|monthly|all]");
+if (!JOB || !["daily", "weekly", "monthly", "reminder", "missed", "all"].includes(JOB)) {
+  console.error("Usage: CRON_SECRET=... npx tsx scripts/run-cron.ts [daily|weekly|monthly|reminder|missed|all]");
   process.exit(1);
 }
 
-const JOBS = JOB === "all" ? ["daily", "weekly", "monthly"] as const : [JOB] as const;
+const JOBS = JOB === "all" ? ["daily", "weekly", "monthly", "reminder", "missed"] as const : [JOB] as const;
 
 async function main() {
   for (const job of JOBS) {

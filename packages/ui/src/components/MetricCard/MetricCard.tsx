@@ -24,6 +24,7 @@ export interface MetricCardProps {
   period?: string;
   icon?: React.ElementType<SvgIconProps>;
   loading?: boolean;
+  animationDelay?: number;
 }
 
 const DIRECTION_ICON = {
@@ -53,6 +54,7 @@ export function MetricCard({
   period,
   icon: Icon,
   loading = false,
+  animationDelay = 0,
 }: MetricCardProps) {
   const trendConfig = trend ? resolveTrend(trend) : null;
 
@@ -62,6 +64,8 @@ export function MetricCard({
       sx={{
         height: "100%",
         transition: "box-shadow 150ms ease, border-color 150ms ease",
+        animation: "fade-up 0.4s ease both",
+        animationDelay: `${animationDelay}ms`,
         "&:hover": {
           boxShadow: "0px 4px 16px rgba(16, 24, 40, 0.08)",
           borderColor: "primary.light",

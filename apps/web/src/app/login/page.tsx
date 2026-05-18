@@ -30,8 +30,8 @@ export default function LoginPage() {
           position: "absolute",
           inset: 0,
           backgroundImage: `
-            linear-gradient(rgb(var(--mui-palette-primary-mainChannel) / 0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgb(var(--mui-palette-primary-mainChannel) / 0.04) 1px, transparent 1px)
+            linear-gradient(rgb(var(--mui-palette-primary-mainChannel) / 0.07) 1px, transparent 1px),
+            linear-gradient(90deg, rgb(var(--mui-palette-primary-mainChannel) / 0.07) 1px, transparent 1px)
           `,
           backgroundSize: "48px 48px",
           pointerEvents: "none",
@@ -40,15 +40,15 @@ export default function LoginPage() {
     >
       <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1, py: 8 }}>
         {/* Wordmark */}
-        <Box sx={{ mb: 1 }}>
+        <Box sx={{ mb: 1, animation: "fade-up 0.5s ease both" }}>
           <Typography
             variant="h3"
-            sx={{ fontSize: { xs: "3rem", sm: "4rem" }, lineHeight: 0.9, letterSpacing: "-0.03em", color: "text.primary" }}
+            sx={{ fontSize: { xs: "4rem", sm: "5.5rem" }, lineHeight: 0.85, letterSpacing: "-0.04em", color: "text.primary" }}
           >
             Org<Box component="span" sx={{ color: "primary.main" }}>OS</Box>
           </Typography>
         </Box>
-        <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 6 }}>
+        <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 6, animation: "fade-up 0.5s ease 80ms both" }}>
           Organizational Intelligence System
         </Typography>
 
@@ -61,6 +61,7 @@ export default function LoginPage() {
             borderRadius: 2,
             p: 4,
             mb: 4,
+            animation: "fade-up 0.5s ease 160ms both",
           }}
         >
           <Typography variant="h6" sx={{ color: "text.primary", mb: 0.5 }}>
@@ -75,23 +76,26 @@ export default function LoginPage() {
         {/* Demo credentials reference */}
         <Box
           sx={{
-            bgcolor: "background.paper",
             border: "1px solid",
             borderColor: "divider",
             borderRadius: 2,
             overflow: "hidden",
+            opacity: 0.75,
+            animation: "fade-up 0.5s ease 240ms both",
+            "&:hover": { opacity: 1, transition: "opacity 200ms ease" },
+            transition: "opacity 200ms ease",
           }}
         >
           <Box
             sx={{
               px: 3,
-              py: 2,
+              py: 1.5,
               borderBottom: "1px solid",
               borderBottomColor: "divider",
-              bgcolor: "rgb(var(--mui-palette-primary-mainChannel) / 0.04)",
+              bgcolor: "rgb(var(--mui-palette-primary-mainChannel) / 0.03)",
             }}
           >
-            <Typography variant="overline" sx={{ color: "text.secondary" }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", fontSize: "0.6rem" }}>
               Demo Accounts
             </Typography>
           </Box>
@@ -102,31 +106,27 @@ export default function LoginPage() {
                 key={account.email}
                 sx={{
                   px: 3,
-                  py: 2,
+                  py: 1.5,
                   borderBottom: i < DEMO_ACCOUNTS.length - 1 ? "1px solid" : "none",
                   borderBottomColor: "divider",
                   display: "grid",
-                  gridTemplateColumns: "140px 1fr 100px",
+                  gridTemplateColumns: "140px 1fr",
                   gap: 2,
                   alignItems: "center",
+                  bgcolor: i % 2 === 0 ? "transparent" : "rgb(var(--mui-palette-primary-mainChannel) / 0.015)",
                 }}
               >
+                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block" }}>
+                  {account.role}
+                </Typography>
                 <Box>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary", display: "block" }}>
-                    {account.role}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block", fontFamily: "monospace" }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block", fontFamily: "monospace", fontSize: "0.7rem" }}>
                     {account.email}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block", fontFamily: "monospace" }}>
-                    {account.password}
+                  <Typography variant="caption" sx={{ color: "text.secondary", opacity: 0.6, display: "block", fontFamily: "monospace", fontSize: "0.7rem" }}>
+                    pw: {account.password}
                   </Typography>
                 </Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.4 }}>
-                  {account.access}
-                </Typography>
               </Box>
             );
           })}
