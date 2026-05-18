@@ -113,6 +113,7 @@ model DailyEntry {
   dropoutReasons      Json?
   guestNotes          String?
   guestsVisited       Boolean            @default(false)
+  imageUrls           String[]           @default([])
   alerts              Alert[]
   department          Department         @relation(fields: [departmentId], references: [id])
   user                User               @relation(fields: [userId], references: [id])

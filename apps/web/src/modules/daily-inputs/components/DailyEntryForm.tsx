@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import { dailyEntryFormSchema, type DailyEntryFormValues, type ReportType, REPORT_TYPES } from "../schema";
 import { submitDailyEntry } from "../actions/submitDailyEntry";
+import { ImageUploader } from "@/modules/youth-coding/components/ImageUploader";
 
 interface Student {
   id: string;
@@ -52,6 +53,7 @@ const EMPTY = (reportType: ReportType): DailyEntryFormValues => ({
   engagementScore: undefined,
   studentsInvolvedIds: undefined,
   guestsVisited: false,
+  imageUrls: [],
   guestNotes: undefined,
 });
 
@@ -620,6 +622,8 @@ export function DailyEntryForm({ departmentId, initialReportType = "DAILY", stud
             </Box>
           </>
         )}
+
+        <ImageUploader images={values.imageUrls ?? []} onChange={(urls) => setValues((p) => ({ ...p, imageUrls: urls }))} />
 
         <Box sx={{ pt: 1 }}>
           <Button

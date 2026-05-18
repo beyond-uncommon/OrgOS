@@ -43,9 +43,10 @@ export const dailyEntryFormSchema = z.object({
   guestsVisited: z.boolean().default(false),
   guestNotes: z.string().max(2000).optional(),
   reportType: z.enum(["DAILY", "INCIDENT", "SESSION"]).default("DAILY"),
-  studentsInvolvedIds: z.array(z.string()).optional(),
+studentsInvolvedIds: z.array(z.string()).optional(),
   dropoutStudentIds: z.array(z.string()).optional(),
-  dropoutReasons: z.record(z.string(), z.string()).optional(), // { studentId: reason }
+  dropoutReasons: z.record(z.string(), z.string()).optional(),
+  imageUrls: z.array(z.string()).max(10).optional().default([]),
 });
 
 export type DailyEntryFormValues = z.infer<typeof dailyEntryFormSchema>;

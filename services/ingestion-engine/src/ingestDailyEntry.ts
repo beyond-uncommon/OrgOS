@@ -46,6 +46,7 @@ export async function ingestDailyEntry(
       ...(fields.studentsInvolvedIds?.length ? { studentsInvolvedIds: fields.studentsInvolvedIds } : {}),
       ...(fields.dropoutStudentIds?.length ? { dropoutStudentIds: fields.dropoutStudentIds } : {}),
       ...(fields.dropoutReasons && Object.keys(fields.dropoutReasons).length ? { dropoutReasons: fields.dropoutReasons } : {}),
+      ...(fields.imageUrls?.length ? { imageUrls: fields.imageUrls } : {}),
     },
   });
 

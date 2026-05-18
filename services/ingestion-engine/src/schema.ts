@@ -24,6 +24,7 @@ export const dailyEntrySchema = z.object({
   studentsInvolvedIds: z.array(z.string()).optional(),
   dropoutStudentIds: z.array(z.string()).optional(),
   dropoutReasons: z.record(z.string(), z.string()).optional(),
+  imageUrls: z.array(z.string()).max(10).optional().default([]),
 });
 
 export type DailyEntryInput = z.infer<typeof dailyEntrySchema>;
