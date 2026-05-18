@@ -56,6 +56,12 @@ export default async function DepartmentDashboardPage({ params }: Props) {
     else redirect("/coming-soon");
   }
 
+  // RBAC: HUB_LEAD can only access their own department
+  if (role === "HUB_LEAD" && user.departmentId && departmentId !== user.departmentId) {
+    const { redirect } = await import("next/navigation");
+    redirect(`/departments/${user.departmentId}`);
+  }
+
   const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, instructors, dept, ycSummary, dailyReports] = await Promise.all([
     getDepartmentDashboard(departmentId),
     getWeeklyInsightSnapshot(departmentId),

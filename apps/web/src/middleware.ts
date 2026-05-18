@@ -45,6 +45,12 @@ const ROUTE_GUARDS: RouteGuard[] = [
   { pattern: /^\/yc\/feedback$/, roles: new Set(["STUDENT"]) },
   { pattern: /^\/student\/students$/, roles: new Set(["INSTRUCTOR", ...ORG_WIDE]) },
   { pattern: /^\/student$/, roles: new Set(["STUDENT", ...ORG_WIDE]) },
+  { pattern: /^\/approvals$/, roles: new Set(["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "YOUTH_CODING_MANAGER", ...ORG_WIDE]) },
+  { pattern: /^\/approvals\/[^/]+$/, roles: new Set(["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "YOUTH_CODING_MANAGER", ...ORG_WIDE]) },
+  { pattern: /^\/insights$/, roles: new Set(["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "COUNTRY_DIRECTOR", "YOUTH_CODING_MANAGER", ...ORG_WIDE]) },
+  { pattern: /^\/metrics$/, roles: new Set(["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "COUNTRY_DIRECTOR", "YOUTH_CODING_MANAGER", ...ORG_WIDE]) },
+  { pattern: /^\/interventions$/, roles: new Set(["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "YOUTH_CODING_MANAGER", ...ORG_WIDE]) },
+  { pattern: /^\/reports$/, roles: new Set(["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "COUNTRY_DIRECTOR", "YOUTH_CODING_MANAGER", ...ORG_WIDE]) },
   { pattern: /^\/coming-soon$/, roles: ALL_STAFF },
 ];
 

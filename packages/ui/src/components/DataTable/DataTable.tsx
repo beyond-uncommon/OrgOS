@@ -21,7 +21,7 @@ export function DataTable<T extends { id: string }>({
       rows={rows}
       columns={columns}
       loading={loading}
-      onRowClick={onRowClick ? (params) => onRowClick(params.row as T) : undefined}
+      {...(onRowClick ? { onRowClick: (params) => onRowClick(params.row as T) } : {})}
       initialState={{
         pagination: {
           paginationModel: { pageSize },

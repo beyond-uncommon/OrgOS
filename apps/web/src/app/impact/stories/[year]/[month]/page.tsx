@@ -4,6 +4,8 @@ import Grid from "@mui/material/Grid2";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ year: string; month: string }>;
 }

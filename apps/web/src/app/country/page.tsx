@@ -23,7 +23,7 @@ export default async function CountryDirectorPage() {
   if (!sessionUser) redirect("/login");
 
   const role = sessionUser.role;
-  if (!["COUNTRY_DIRECTOR", "ADMIN"].includes(role)) {
+  if (!["COUNTRY_DIRECTOR", "ADMIN", "HEAD_OF_OPERATIONS", "M_AND_E", "SAFEGUARDING", "MARKETING_COMMS_MANAGER", "BUSINESS_DEVELOPMENT_MANAGER", "BUSINESS_DEVELOPMENT_ASSOCIATE", "HR_OFFICER", "FINANCE_ADMIN_OFFICER"].includes(role)) {
     if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
     else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
     else if (role === "BOOTCAMP_MANAGER") redirect(`/bootcamps/${sessionUser.departmentId}`);

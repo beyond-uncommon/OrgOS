@@ -179,20 +179,6 @@ export const theme = createTheme({
     },
   },
 
-  // Custom tokens used by shared UI components
-  custom: {
-    tertiary: {
-      main: "#7C3AED",
-      light: "#A78BFA",
-      dark: "#5B21B6",
-    },
-    surface: {
-      main: "#FFFFFF",
-      variant: "#F8F9FC",
-    },
-    outline: {
-      main: "#E5E7EB",
-      light: "#F3F4F6",
-    },
-  },
+  // NOTE: Custom tokens (tertiary, surface, outline) were removed from MUI v6
+// compatibility. Shared UI components use standard palette tokens instead.
 });
