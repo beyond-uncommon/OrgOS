@@ -93,10 +93,18 @@ export const theme = createTheme({
   components: {
     MuiCssBaseline: {
       styleOverrides: {
+        "@keyframes pulse-dot": {
+          "0%, 100%": { opacity: 1, transform: "scale(1)" },
+          "50%": { opacity: 0.5, transform: "scale(1.4)" },
+        },
+        "@keyframes fade-up": {
+          from: { opacity: 0, transform: "translateY(10px)" },
+          to: { opacity: 1, transform: "translateY(0)" },
+        },
         body: {
           backgroundColor: "#F8F9FC",
           backgroundImage:
-            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(7,71,161,0.04) 0%, transparent 60%)",
+            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(7,71,161,0.09) 0%, transparent 60%)",
           minHeight: "100vh",
         },
         "::selection": {

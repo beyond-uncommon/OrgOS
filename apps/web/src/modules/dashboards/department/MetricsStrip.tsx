@@ -50,6 +50,7 @@ export function MetricsStrip({ data }: Props) {
           value={attendance !== null ? `${Math.round(attendance * 100)}` : "—"}
           unit="%"
           period="vs yesterday"
+          animationDelay={0}
           {...(trend ? { trend } : {})}
         />
       </Grid>
@@ -58,6 +59,7 @@ export function MetricsStrip({ data }: Props) {
           label="Engagement"
           value={engagementStr}
           period="today"
+          animationDelay={60}
           {...(engagementTrend(engagementRaw) ? { trend: engagementTrend(engagementRaw)! } : {})}
         />
       </Grid>
@@ -66,12 +68,14 @@ export function MetricsStrip({ data }: Props) {
           label="Outputs Completed"
           value={outputs ?? "—"}
           period="today"
+          animationDelay={120}
         />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
         <MetricCard
           label="Dropout Flags"
           value={dropouts ?? 0}
+          animationDelay={180}
           {...(hasDropouts ? { trend: { direction: "up" as const, impact: "negative" as const } } : {})}
         />
       </Grid>

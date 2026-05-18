@@ -15,6 +15,14 @@
     {
       "path": "/api/cron/monthly",
       "schedule": "0 9 1 * *"
+    },
+    {
+      "path": "/api/cron/submission-reminder",
+      "schedule": "0 9 * * 1-5"
+    },
+    {
+      "path": "/api/cron/submission-missed",
+      "schedule": "0 8 * * *"
     }
   ]
 }

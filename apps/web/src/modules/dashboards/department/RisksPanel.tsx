@@ -11,7 +11,7 @@ export function RisksPanel({ alerts }: Props) {
     return (
       <Box
         sx={{
-          py: 3,
+          py: 4,
           textAlign: "center",
           border: "1px solid",
           borderColor: "divider",
@@ -21,17 +21,21 @@ export function RisksPanel({ alerts }: Props) {
       >
         <Box
           sx={{
-            width: 6,
-            height: 6,
+            width: 8,
+            height: 8,
             borderRadius: "50%",
             bgcolor: "success.main",
-            boxShadow: "0 0 8px #22C55E",
+            boxShadow: "0 0 10px #22C55E",
             mx: "auto",
-            mb: 1,
+            mb: 1.5,
+            animation: "pulse-dot 2.4s ease-in-out infinite",
           }}
         />
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          No active anomalies detected
+        <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 500 }}>
+          All clear — no active anomalies
+        </Typography>
+        <Typography variant="caption" sx={{ color: "text.secondary", opacity: 0.7, display: "block", mt: 0.5 }}>
+          System monitoring continuously
         </Typography>
       </Box>
     );
