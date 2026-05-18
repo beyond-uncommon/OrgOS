@@ -1,9 +1,6 @@
 name: Cron Pipeline
 
 on:
-  schedule:
-    # Every day at 6 PM UTC — runs end-of-day anomaly checks, metric extraction, weekly/monthly reports, snapshots
-    - cron: "0 18 * * *"
   workflow_dispatch:
     inputs:
       job:
@@ -25,7 +22,7 @@ jobs:
   daily:
     name: Daily Pipeline
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event.inputs.job == 'daily' || github.event.inputs.job == 'all'
+    if: github.event.inputs.job == 'daily' || github.event.inputs.job == 'all'
     steps:
       - name: Trigger daily cron
         run: |
@@ -37,7 +34,7 @@ jobs:
   weekly:
     name: Weekly Pipeline
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.job == 'weekly' || github.event.inputs.job == 'all')
+    if: github.event.inputs.job == 'weekly' || github.event.inputs.job == 'all'
     steps:
       - name: Trigger weekly cron
         run: |
@@ -49,7 +46,7 @@ jobs:
   monthly:
     name: Monthly Pipeline
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.job == 'monthly' || github.event.inputs.job == 'all')
+    if: github.event.inputs.job == 'monthly' || github.event.inputs.job == 'all'
     steps:
       - name: Trigger monthly cron
         run: |
