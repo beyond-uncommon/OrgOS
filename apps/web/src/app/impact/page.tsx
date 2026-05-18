@@ -96,6 +96,44 @@ export default async function ImpactPage() {
     where: { departmentId: { in: ycHubIds }, date: { gte: prevYearStart, lte: prevYearEnd } },
   }) : 0;
 
+  // ── Student reports (YC feedback) ─────────────────────
+  const studentReports = ycProgram
+    ? await prisma.studentReport.findMany({
+        where: { student: { departmentId: { in: ycHubIds } } },
+        select: {
+          id: true, learned: true, enjoyed: true, struggled: true,
+          rating: true, date: true,
+          student: { select: { name: true } },
+        },
+        orderBy: { date: "desc" },
+        take: 20,
+      })
+    : [];
+
+  const latestStudentQuotes = studentReports.slice(0, 5).map((r) => ({
+    student: r.student.name,
+    quote: r.enjoyed.length > 0 ? r.enjoyed : r.learned,
+    rating: r.rating,
+    date: r.date,
+  }));
+
+  const avgRating = studentReports.length > 0
+    ? Math.round(studentReports.reduce((s, r) => s + r.rating, 0) / studentReports.length * 10) / 10
+    : null;
+
+  // ── Daily entry summaries ──────────────────────────────
+  const recentEntries = await prisma.dailyEntry.findMany({
+    where: { departmentId: { in: hubIds }, date: { gte: thisYearStart } },
+    select: { attendanceStatus: true, outputCompleted: true, blockers: true, quickSummary: true, date: true },
+    orderBy: { date: "desc" },
+    take: 50,
+  });
+
+  const dailyEntryCount = recentEntries.length;
+  const avgDailySummary = dailyEntryCount > 0
+    ? Math.round(recentEntries.reduce((s, e) => s + (e.quickSummary?.split(" ").length ?? 0), 0) / dailyEntryCount)
+    : 0;
+
   // ── Bootcamp data ─────────────────────────────────────
   const bootcampProgram = programs.find(p => p.name.toLowerCase().includes("bootcamp"));
   const bootcampHubIds = hubs.filter(h => bootcampIds.includes(h.parentDepartmentId ?? "")).map(h => h.id);
@@ -146,6 +184,8 @@ export default async function ImpactPage() {
     overallSchools: overallSchools.length,
     overallCommunities: overallCommunities.length,
     todayStr,
+    dailyEntryCount,
+    avgDailySummary,
   };
 
   const ycData = ycProgram ? {
@@ -162,6 +202,9 @@ export default async function ImpactPage() {
     completedStudents,
     gender: ycGender.filter((g): g is typeof g & { gender: string } => g.gender !== null).map(g => ({ gender: g.gender as string, count: g._count })),
     funding: programFunding[ycProgram.id] ?? 0,
+    studentReportsCount: studentReports.length,
+    avgRating,
+    latestStudentQuotes,
   } : null;
 
   const bootcampData = bootcampProgram ? {

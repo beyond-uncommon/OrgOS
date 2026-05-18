@@ -64,6 +64,8 @@ const PROGRAM_DESCRIPTIONS: Record<string, string> = {
 
 interface GenderItem { gender: string; count: number }
 
+interface StudentQuote { student: string; quote: string; rating: number; date: Date }
+
 interface Props {
   overview: {
     totalStudents: number;
@@ -76,12 +78,15 @@ interface Props {
     overallSchools: number;
     overallCommunities: number;
     todayStr: string;
+    dailyEntryCount: number;
+    avgDailySummary: number;
   };
   ycData: {
     name: string; students: number; hubs: number; schools: number; communities: number;
     avgAge: number | null; sessions: number; sessionsTrend: number | null;
     sessionsByMonth: number[]; completionRate: number; completedStudents: number | null;
     gender: GenderItem[]; funding: number;
+    studentReportsCount: number; avgRating: number | null; latestStudentQuotes: StudentQuote[];
   } | null;
   bootcampData: {
     name: string; students: number; bootcamps: number; hubs: number;
@@ -331,6 +336,29 @@ export function ImpactClient(props: Props) {
               </Typography>
               <DemographicsBox gender={overview.overallGender} students={overview.totalStudents} schools={overview.overallSchools} communities={overview.overallCommunities} />
             </Box>
+
+            {/* Daily entry report summary */}
+            {overview.dailyEntryCount > 0 && (
+              <Box sx={{ mb: 5 }}>
+                <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+                  Operational Activity ({overview.dailyEntryCount} entries this year)
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 6, md: 3 }}>
+                    <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: 3, bgcolor: "background.paper", textAlign: "center" }}>
+                      <Typography variant="h3" sx={{ fontWeight: 700, color: "primary.main" }}>{fmt(overview.dailyEntryCount)}</Typography>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>Staff Reports Submitted</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 6, md: 3 }}>
+                    <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: 3, bgcolor: "background.paper", textAlign: "center" }}>
+                      <Typography variant="h3" sx={{ fontWeight: 700, color: "secondary.main" }}>{overview.avgDailySummary}</Typography>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>Avg Words per Summary</Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
           </>
         )}
 
@@ -352,6 +380,37 @@ export function ImpactClient(props: Props) {
             </Grid>
 
             <SessionsChart data={ycData.sessionsByMonth} />
+
+            {/* Student feedback quotes */}
+            {ycData.studentReportsCount > 0 && (
+              <Box sx={{ mb: 5 }}>
+                <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+                  Student Voice ({ycData.studentReportsCount} reports, avg {ycData.avgRating}/5)
+                </Typography>
+                <Grid container spacing={2}>
+                  {ycData.latestStudentQuotes.map((q, i) => (
+                    <Grid key={i} size={{ xs: 12, md: 6 }}>
+                      <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 3, bgcolor: "background.paper", position: "relative" }}>
+                        <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
+                          {q.student}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontStyle: "italic", color: "text.secondary", lineHeight: 1.6, mb: 1.5 }}>
+                          &ldquo;{q.quote.length > 150 ? q.quote.slice(0, 150) + "\u2026" : q.quote}&rdquo;
+                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Box key={i} sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: i < q.rating ? "primary.main" : "divider" }} />
+                          ))}
+                          <Typography variant="caption" sx={{ color: "text.disabled", ml: 0.5 }}>
+                            {new Date(q.date).toLocaleDateString()}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
 
             <Box sx={{ mb: 5 }}>
               <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
