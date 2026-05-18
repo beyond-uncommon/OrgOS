@@ -239,9 +239,7 @@ export async function getYCMasterList(departmentId?: string) {
 
 export async function getYCHubs() {
   return prisma.department.findMany({
-    where: {
-      parent: { name: "Youth Coding Program" },
-    },
+    where: { parent: { isNot: null } },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
@@ -255,10 +253,7 @@ export async function getYCStudentReports(departmentId?: string, days = 7) {
   try {
     const where = departmentId
       ? { student: { departmentId }, date: { gte: from } }
-      : {
-          student: { department: { parent: { name: "Youth Coding Program" } } },
-          date: { gte: from },
-        };
+      : { date: { gte: from } };
 
     return await prisma.studentReport.findMany({
       where,
@@ -284,7 +279,7 @@ export async function getYCInstructorEntries(departmentId?: string, days = 7) {
     const hubIds = departmentId
       ? [departmentId]
       : (await prisma.department.findMany({
-          where: { parent: { name: "Youth Coding Program" } },
+          where: { parent: { isNot: null } },
           select: { id: true },
         })).map(d => d.id);
 
@@ -314,7 +309,7 @@ export async function getYCWeeklyReports(departmentId?: string) {
     const hubIds = departmentId
       ? [departmentId]
       : (await prisma.department.findMany({
-          where: { parent: { name: "Youth Coding Program" } },
+          where: { parent: { isNot: null } },
           select: { id: true },
         })).map(d => d.id);
 
@@ -330,4 +325,22 @@ export async function getYCWeeklyReports(departmentId?: string) {
   } catch {
     return [];
   }
+}
+
+export async function getYCSessionsForManager(departmentId?: string) {
+  const scopeFilter = departmentId
+    ? { departmentId }
+    : { department: { parent: { name: "Youth Coding Program" } } };
+
+  return prisma.youthCodingSession.findMany({
+    where: scopeFilter,
+    include: {
+      submittedBy: { select: { id: true, name: true } },
+      attendance: {
+        include: { student: { select: { id: true, name: true } } },
+      },
+    },
+    orderBy: { date: "desc" },
+    take: 20,
+  });
 }

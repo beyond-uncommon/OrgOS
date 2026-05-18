@@ -37,9 +37,10 @@ export function redirectByRole(
     case "PROGRAM_MANAGER":
       redirect(`/programs`);
     case "COUNTRY_DIRECTOR":
-      redirect(`/country`);
+    case "ADMIN":
+      redirect("/org");
     case "STUDENT":
-      redirect(`/student`);
+      redirect("/student");
     default:
       redirect("/coming-soon");
   }

@@ -33,6 +33,10 @@ export default async function CountryDirectorPage() {
     else redirect("/coming-soon");
   }
 
+  if (role === "COUNTRY_DIRECTOR" || role === "ADMIN") {
+    redirect("/org");
+  }
+
   const { programs, programManagers, bootcamps, hubs, latestSnapshot, alerts, studentCount } =
     await getCountryDashboardData();
 

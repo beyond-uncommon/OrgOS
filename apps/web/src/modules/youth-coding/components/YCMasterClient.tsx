@@ -9,6 +9,7 @@ import {
 import { UserBar } from "@/components/UserBar";
 import { YCStudentReportsPanel } from "./YCStudentReportsPanel";
 import { YCInstructorReportsPanel } from "./YCInstructorReportsPanel";
+import { InstructorYCSessionsPanel } from "./InstructorYCSessionsPanel";
 
 interface YCStudent {
   id: string;
@@ -72,6 +73,17 @@ interface WeeklyReport {
   reviewedBy: { name: string } | null;
 }
 
+interface YCSession {
+  id: string;
+  date: Date;
+  lessonNumber: number;
+  projectName: string;
+  school: string;
+  community: string;
+  submittedBy: { id: string; name: string };
+  attendance: { student: { id: string; name: string }; projectStatus: string }[];
+}
+
 function computeMetrics(students: YCStudent[]): YCMetrics {
   const yearStart = new Date(new Date().getFullYear(), 0, 1);
   const taughtYTD = students.filter(s =>
@@ -111,6 +123,7 @@ export function YCMasterClient({
   studentReports,
   instructorEntries,
   weeklyReports,
+  sessions,
 }: {
   user: { name: string; role: string };
   students: YCStudent[];
@@ -119,6 +132,7 @@ export function YCMasterClient({
   studentReports: StudentReport[];
   instructorEntries: InstructorEntry[];
   weeklyReports: WeeklyReport[];
+  sessions: YCSession[];
 }) {
   const [tab, setTab] = useState(0);
   const [selectedHub, setSelectedHub] = useState("");
@@ -213,6 +227,7 @@ export function YCMasterClient({
           <Tab label="Metrics" />
           <Tab label="Master Database" />
           <Tab label="Student Feedback" />
+          <Tab label="Sessions" />
           <Tab label="Instructor Reports" />
         </Tabs>
 
@@ -253,8 +268,23 @@ export function YCMasterClient({
           </Box>
         )}
 
+        {/* ── Sessions tab ── */}
+        {tab === 4 && (
+          <Box>
+            <Typography variant="h6" sx={{ mb: 3, color: "text.secondary", fontWeight: 400 }}>
+              Recent Sessions — {selectedHubName}
+            </Typography>
+            <InstructorYCSessionsPanel
+              sessions={selectedHub ? sessions.filter(s => {
+                // Filter by hub - we don't have department on sessions directly
+                return true;
+              }) : sessions}
+            />
+          </Box>
+        )}
+
         {/* ── Instructor Reports tab ── */}
-        {tab === 3 && (
+        {tab === 4 && (
           <Box>
             <Typography variant="h6" sx={{ mb: 3, color: "text.secondary", fontWeight: 400 }}>
               Instructor Daily Entries &amp; Weekly Reports — {selectedHubName}

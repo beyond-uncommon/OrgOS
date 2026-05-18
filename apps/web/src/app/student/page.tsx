@@ -77,6 +77,18 @@ export default async function StudentDashboardPage() {
             <Typography variant="body1" sx={{ fontWeight: 600 }}>My Students →</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>View registered students</Typography>
           </Box>
+          <Box
+            component={Link}
+            href="/student/sessions"
+            sx={{
+              px: 3, py: 2, border: "1px solid", borderColor: "divider",
+              borderRadius: 2, textDecoration: "none", color: "text.primary",
+              "&:hover": { borderColor: "primary.main" },
+            }}
+          >
+            <Typography variant="body1" sx={{ fontWeight: 600 }}>Submit Session →</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>Record today&apos;s lesson</Typography>
+          </Box>
         </Box>
 
         {sessions.length > 0 && (
