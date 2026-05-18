@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography, Chip } from "@mui/material";
+import { Box, Typography, Chip, Button } from "@mui/material";
 import Link from "next/link";
 import { logout } from "@/lib/auth/actions";
 
@@ -31,11 +31,31 @@ const ROLE_LABEL: Record<string, string> = {
 interface Props {
   name: string;
   role: string;
+  showSubmit?: boolean;
 }
 
-export function UserBar({ name, role }: Props) {
+export function UserBar({ name, role, showSubmit = true }: Props) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      {showSubmit && (
+        <Button
+          component={Link}
+          href="/submit"
+          size="small"
+          variant="contained"
+          sx={{
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            textTransform: "none",
+            borderRadius: 1.5,
+            px: 2,
+            py: 0.6,
+            letterSpacing: "0.02em",
+          }}
+        >
+          Submit
+        </Button>
+      )}
       <Chip
         label={ROLE_LABEL[role] ?? role}
         size="small"

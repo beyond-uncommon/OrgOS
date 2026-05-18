@@ -5,6 +5,8 @@ import { CheckInPanel } from "@/modules/youth-coding/components/CheckInPanel";
 import { Box, Container, Typography, Collapse, Button } from "@mui/material";
 import { getOrCreateTodaySession } from "@/modules/youth-coding/actions/markHubAttendance";
 import { requireSession } from "@/lib/auth/requireSession";
+import { UserBar } from "@/components/UserBar";
+import Link from "next/link";
 
 interface Props {
   params: Promise<{ departmentId: string }>;
@@ -12,7 +14,7 @@ interface Props {
 
 export default async function HubAttendancePage({ params }: Props) {
   const { departmentId } = await params;
-  await requireSession();
+  const sessionUser = await requireSession();
 
   const department = await prisma.department.findUnique({
     where: { id: departmentId },
@@ -50,13 +52,23 @@ export default async function HubAttendancePage({ params }: Props) {
                 })}
               </Typography>
             </Box>
-            <Box sx={{ textAlign: "center" }}>
-              <Box
-                sx={{ display: "inline-block", bgcolor: "white", p: 0.5, borderRadius: 1, border: "1px solid", borderColor: "divider", lineHeight: 0 }}
-                dangerouslySetInnerHTML={{ __html: qrSvg }}
-              />
-              <Typography variant="caption" display="block" sx={{ mt: 0.3, color: "text.disabled", fontSize: "0.6rem" }}>
-                QR setup
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ textAlign: "center" }}>
+                <Box
+                  sx={{ display: "inline-block", bgcolor: "white", p: 0.5, borderRadius: 1, border: "1px solid", borderColor: "divider", lineHeight: 0 }}
+                  dangerouslySetInnerHTML={{ __html: qrSvg }}
+                />
+                <Typography variant="caption" display="block" sx={{ mt: 0.3, color: "text.disabled", fontSize: "0.6rem" }}>
+                  QR setup
+                </Typography>
+              </Box>
+              <UserBar name={sessionUser.name} role={sessionUser.role} />
+              <Typography
+                component={Link}
+                href={`/departments/${departmentId}`}
+                sx={{ fontSize: "0.75rem", color: "text.secondary", textDecoration: "none", "&:hover": { color: "primary.main" } }}
+              >
+                ← Dashboard
               </Typography>
             </Box>
           </Box>
