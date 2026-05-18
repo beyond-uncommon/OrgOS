@@ -3,6 +3,7 @@ export type {
   Department,
   DailyEntry,
   ExtractedMetric,
+  DailyReport,
   WeeklyReport,
   MonthlyReport,
   Alert,

@@ -46,6 +46,7 @@ model Department {
   parent              Department?          @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id])
   children            Department[]         @relation("DepartmentHierarchy")
   monthlyReports      MonthlyReport[]
+  dailyReports        DailyReport[]
   outcomeRecords      OutcomeRecord[]
   pendingActions      PendingAction[]
   students            Student[]
@@ -79,6 +80,7 @@ model User {
   students               Student[]            @relation("InstructorStudents")
   department             Department           @relation(fields: [departmentId], references: [id])
   reviewedWeeklyReports  WeeklyReport[]       @relation("WeeklyReportReviewer")
+  reviewedDailyReports    DailyReport[]        @relation("DailyReportReviewer")
   submittedSessions      YouthCodingSession[] @relation("SessionSubmitter")
 
   @@index([departmentId])
@@ -453,6 +455,28 @@ model DashboardSnapshot {
   department   Department?   @relation(fields: [departmentId], references: [id])
 
   @@index([scope, periodType, periodStart])
+  @@index([departmentId])
+}
+
+model DailyReport {
+  id               String       @id @default(cuid())
+  date             DateTime     @db.Date
+  departmentId     String
+  status           ReportStatus @default(DRAFT)
+  generatedContent Json
+  generatedMetrics Json
+  originalContent  Json
+  editLog          Json         @default("[]")
+  promptVersion    String
+  reviewedById     String?
+  reviewedAt       DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  department       Department   @relation(fields: [departmentId], references: [id])
+  reviewedBy       User?        @relation("DailyReportReviewer", fields: [reviewedById], references: [id])
+
+  @@unique([departmentId, date])
+  @@index([status])
   @@index([departmentId])
 }
 

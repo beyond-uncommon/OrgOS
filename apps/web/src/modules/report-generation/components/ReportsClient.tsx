@@ -11,6 +11,19 @@ import Link from "next/link";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import FileOpenIcon from "@mui/icons-material/FileOpen";
 import { approveWeeklyReport } from "@/modules/report-generation/actions/approveWeeklyReport";
+import { approveDailyReport } from "@/modules/report-generation/actions/approveDailyReport";
+
+type DailyReportRow = {
+  id: string;
+  date: Date;
+  status: string;
+  promptVersion: string;
+  generatedContent: object;
+  generatedMetrics: object;
+  reviewedById: string | null;
+  reviewedAt: Date | null;
+  createdAt: Date;
+};
 
 type WeeklyReportRow = {
   id: string;
@@ -39,6 +52,7 @@ type MonthlyReportRow = {
 };
 
 interface Props {
+  dailyReports: DailyReportRow[];
   weeklyReports: WeeklyReportRow[];
   monthlyReports: MonthlyReportRow[];
 }
@@ -90,6 +104,112 @@ function ReportContentDialog({ open, onClose, content }: {
         <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
+  );
+}
+
+function DailyReportsTab({ reports }: { reports: DailyReportRow[] }) {
+  const [selected, setSelected] = React.useState<DailyReportRow | null>(null);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [approving, setApproving] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [, setRefresh] = React.useState(0);
+
+  async function handleApprove(id: string) {
+    setApproving(id);
+    setError(null);
+    const result = await approveDailyReport(id);
+    setApproving(null);
+    if (!result.success) { setError(result.error ?? "Failed"); return; }
+    setRefresh((n) => n + 1);
+  }
+
+  return (
+    <>
+      {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>{error}</Alert>}
+
+      {reports.length === 0 ? (
+        <EmptyState message="No daily reports generated yet" />
+      ) : (
+        <TableContainer component={Paper} sx={{ border: "1px solid", borderColor: "divider" }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: "grey.50" }}>
+                <TableCell sx={{ fontWeight: 600, fontSize: "0.75rem" }}>Date</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: "0.75rem" }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: "0.75rem" }}>Generated</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: "0.75rem" }}>Reviewed</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: "0.75rem" }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {reports.map((report) => (
+                <TableRow key={report.id} hover>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {formatDate(report.date)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={STATUS_LABEL[report.status] ?? report.status}
+                      size="small"
+                      color={STATUS_COLOR[report.status] ?? "default"}
+                      sx={{ fontSize: "0.625rem" }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      {formatDate(report.createdAt)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    {report.reviewedAt ? (
+                      <Typography variant="caption" sx={{ color: "success.main" }}>
+                        {formatDate(report.reviewedAt)}
+                      </Typography>
+                    ) : (
+                      <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<FileOpenIcon sx={{ fontSize: 14 }} />}
+                        onClick={() => { setSelected(report); setDialogOpen(true); }}
+                        sx={{ fontSize: "0.7rem", textTransform: "none" }}
+                      >
+                        View
+                      </Button>
+                      {report.status === "DRAFT" && (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="success"
+                          startIcon={approving === report.id ? <CircularProgress size={10} color="inherit" /> : <CheckCircleOutlineIcon sx={{ fontSize: 14 }} />}
+                          onClick={() => handleApprove(report.id)}
+                          disabled={approving === report.id}
+                          sx={{ fontSize: "0.7rem", textTransform: "none" }}
+                        >
+                          Approve
+                        </Button>
+                      )}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      <ReportContentDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        content={selected?.generatedContent ?? {}}
+      />
+    </>
   );
 }
 
@@ -276,10 +396,10 @@ function MonthlyReportsTab({ reports }: { reports: MonthlyReportRow[] }) {
   );
 }
 
-export function ReportsClient({ weeklyReports, monthlyReports }: Props) {
+export function ReportsClient({ dailyReports, weeklyReports, monthlyReports }: Props) {
   const [tab, setTab] = React.useState(0);
 
-  const draftCount = weeklyReports.filter((r) => r.status === "DRAFT").length;
+  const draftCount = weeklyReports.filter((r) => r.status === "DRAFT").length + dailyReports.filter((r) => r.status === "DRAFT").length;
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
@@ -316,24 +436,25 @@ export function ReportsClient({ weeklyReports, monthlyReports }: Props) {
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" sx={{ mb: 0.5, letterSpacing: "-0.02em" }}>Reports</Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Auto-generated weekly and monthly reports from your daily entries and extracted metrics.
+            Auto-generated daily, weekly, and monthly reports from your daily entries and extracted metrics.
           </Typography>
         </Box>
 
         {draftCount > 0 && (
           <Alert severity="warning" sx={{ mb: 3 }}>
-            {draftCount} weekly report{draftCount > 1 ? "s" : ""} awaiting review and approval.
+            {draftCount} report{draftCount > 1 ? "s" : ""} awaiting review and approval.
           </Alert>
         )}
 
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
           <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-            <Tab label={`Weekly Reports (${weeklyReports.length})`} />
-            <Tab label={`Monthly Reports (${monthlyReports.length})`} />
+            <Tab label={`Daily (${dailyReports.length})`} />
+            <Tab label={`Weekly (${weeklyReports.length})`} />
+            <Tab label={`Monthly (${monthlyReports.length})`} />
           </Tabs>
         </Box>
 
-        {tab === 0 ? <WeeklyReportsTab reports={weeklyReports} /> : <MonthlyReportsTab reports={monthlyReports} />}
+        {tab === 0 ? <DailyReportsTab reports={dailyReports} /> : tab === 1 ? <WeeklyReportsTab reports={weeklyReports} /> : <MonthlyReportsTab reports={monthlyReports} />}
       </Container>
     </Box>
   );

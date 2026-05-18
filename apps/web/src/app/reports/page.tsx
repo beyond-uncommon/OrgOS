@@ -16,7 +16,25 @@ export default async function ReportsPage() {
 
   const accessibleIds = await getAccessibleDepartmentIds(role, departmentId, prisma);
 
-  const [weeklyReports, monthlyReports] = await Promise.all([
+  const [dailyReports, weeklyReports, monthlyReports] = await Promise.all([
+    accessibleIds.length > 0
+      ? prisma.dailyReport.findMany({
+          where: { departmentId: { in: accessibleIds } },
+          orderBy: { date: "desc" },
+          take: 30,
+          select: {
+            id: true,
+            date: true,
+            status: true,
+            promptVersion: true,
+            generatedContent: true,
+            generatedMetrics: true,
+            reviewedById: true,
+            reviewedAt: true,
+            createdAt: true,
+          },
+        })
+      : Promise.resolve([]),
     accessibleIds.length > 0
       ? prisma.weeklyReport.findMany({
           where: { departmentId: { in: accessibleIds } },
@@ -57,5 +75,5 @@ export default async function ReportsPage() {
       : Promise.resolve([]),
   ]);
 
-  return <ReportsClient weeklyReports={weeklyReports as never[]} monthlyReports={monthlyReports as never[]} />;
+  return <ReportsClient dailyReports={dailyReports as never[]} weeklyReports={weeklyReports as never[]} monthlyReports={monthlyReports as never[]} />;
 }

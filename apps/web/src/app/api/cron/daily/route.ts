@@ -15,7 +15,30 @@ export async function POST(request: Request) {
   const errors: string[] = [];
 
   try {
-    // ── Step 1: End-of-day anomaly checks ──────────────────────────────────
+    // ── Step 1: Generate daily report per department ─────────────────────────
+    const { prisma } = await import("@orgos/db");
+    const departments = await prisma.department.findMany({ select: { id: true } });
+
+    for (const dept of departments) {
+      try {
+        const { generateDailyReport } = await import("@orgos/report-generator");
+        await withRetry(
+          async () => {
+            const result = await generateDailyReport(dept.id, date);
+            if (!result.success && !result.error?.includes("already exists") && !result.error?.includes("No daily entries")) {
+              throw new Error(result.error);
+            }
+            return result;
+          },
+          { label: `daily_report:${dept.id}`, maxRetries: 2, baseDelayMs: 3000 }
+        );
+        results.push(`daily_report:${dept.id}:ok`);
+      } catch (err) {
+        errors.push(`daily_report:${dept.id} failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    // ── Step 2: End-of-day anomaly checks ───────────────────────────────────
     // Detects missing entries per department, creates Alert records.
     const { runEndOfDayChecks } = await import("@orgos/anomaly-detection");
     const date = new Date();
@@ -26,7 +49,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    // ── Step 2: Process all COMPLETE entries that haven't been extracted ────
+    // ── Step 3: Process all COMPLETE entries that haven't been extracted ────
     // Re-processes SUBMITTED entries that were flagged as failed in the pipeline.
     // This is idempotent — safe to run daily.
     const { prisma, EntryStatus } = await import("@orgos/db");
@@ -65,7 +88,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    // ── Step 3: Generate weekly reports for departments that need one ────────
+    // ── Step 4: Generate weekly reports for departments that need one ────────
     const { prisma } = await import("@orgos/db");
     const departments = await prisma.department.findMany({ select: { id: true } });
 
@@ -101,7 +124,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    // ── Step 4: Generate monthly report on the 1st of each month ────────────
+    // ── Step 5: Generate monthly report on the 1st of each month ─────────────
     const now = new Date();
     if (now.getDate() === 1) {
       const { prisma } = await import("@orgos/db");
@@ -133,7 +156,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    // ── Step 5: Refresh dashboard snapshots for all active departments ──────
+    // ── Step 6: Refresh dashboard snapshots for all active departments ──────
     const { prisma } = await import("@orgos/db");
     const departments = await prisma.department.findMany({ select: { id: true } });
 
