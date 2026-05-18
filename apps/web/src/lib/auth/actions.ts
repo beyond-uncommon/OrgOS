@@ -55,3 +55,24 @@ export async function logout() {
   jar.delete(getSessionCookieName());
   redirect("/login");
 }
+
+export async function switchUser(email: string) {
+  const expected = getDemoPasswords()[email];
+  if (!expected) return;
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, role: true, departmentId: true },
+  });
+  if (!user) return;
+
+  const jar = await cookies();
+  jar.set(getSessionCookieName(), `${user.role}:${user.id}`, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24,
+  });
+
+  redirect("/");
+}
