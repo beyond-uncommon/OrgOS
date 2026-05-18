@@ -26,6 +26,10 @@ export async function login(
   const email = (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
   const password = (formData.get("password") as string | null) ?? "";
 
+  if (!email.endsWith("@uncommon.org")) {
+    return { error: "Only @uncommon.org accounts are allowed." };
+  }
+
   const expected = getDemoPasswords()[email];
   if (!expected || expected !== password) {
     return { error: "Invalid email or password." };
@@ -57,6 +61,8 @@ export async function logout() {
 }
 
 export async function switchUser(email: string) {
+  if (!email.endsWith("@uncommon.org")) return;
+
   const expected = getDemoPasswords()[email];
   if (!expected) return;
 
