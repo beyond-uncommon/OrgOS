@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const reminders: Array<{ name: string; email: string; departmentName: string }> = [];
 
   const departments = await prisma.department.findMany({
-    where: { parentId: { isNot: null } },
+    where: { parentDepartmentId: { not: null } },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

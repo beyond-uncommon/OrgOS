@@ -28,14 +28,15 @@ export async function getTodaySubmissionStatus(departmentId: string) {
 
   const statuses: InstructorSubmissionStatus[] = instructors.map(inst => {
     const entry = byUser.get(inst.id);
-    return {
+    const base = {
       userId: inst.id,
       userName: inst.name,
       userEmail: inst.email,
       submitted: submittedIds.has(inst.id),
-      submittedAt: entry?.createdAt,
-      entryId: entry?.id,
     };
+    return entry
+      ? { ...base, submittedAt: entry.createdAt, entryId: entry.id }
+      : base;
   });
 
   const submitted = statuses.filter(s => s.submitted).length;
@@ -47,7 +48,7 @@ export async function getTodaySubmissionStatus(departmentId: string) {
 
 export async function getTodaySubmissionStatusOrgWide() {
   const departments = await prisma.department.findMany({
-    where: { parentId: { isNot: null } },
+    where: { parentDepartmentId: { not: null } },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

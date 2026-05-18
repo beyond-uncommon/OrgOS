@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   weekStart.setHours(0, 0, 0, 0);
 
   const departments = await prisma.department.findMany({
-    where: { parentId: { isNot: null } },
+    where: { parentDepartmentId: { not: null } },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     for (const inst of instructors) {
       const dates = submittedByUser.get(inst.id) ?? new Set();
       const expectedDays = getExpectedDays(weekStart, now);
-      const missedDays = expectedDays - expectedDays.filter(d => dates.has(d)).length;
+      const missedDays = expectedDays.length - expectedDays.filter(d => dates.has(d)).length;
 
       if (missedDays > 0) {
         missing.push({
