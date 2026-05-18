@@ -26,13 +26,9 @@ interface Student {
 export function MyStudentsClient({
   user,
   students: initial,
-  instructorId,
-  departmentId,
 }: {
   user: { name: string; role: string };
   students: Student[];
-  instructorId: string;
-  departmentId: string;
 }) {
   const [students, setStudents] = useState(initial);
   const [filter, setFilter] = useState("");
@@ -189,16 +185,12 @@ export function MyStudentsClient({
       <AddStudentDialog
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        instructorId={instructorId}
-        departmentId={departmentId}
         onCreated={handleStudentCreated}
       />
 
       <CsvUploadDialog
         open={csvOpen}
         onClose={() => setCsvOpen(false)}
-        instructorId={instructorId}
-        departmentId={departmentId}
         onComplete={handleCsvComplete}
       />
     </Box>

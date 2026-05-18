@@ -39,6 +39,16 @@ export default async function ImpactPage() {
 
   const totalFunding = fundingRecords.reduce((s, r) => s + r.amount, 0);
 
+  // ── Trend data ─────────────────────────────────────────
+  const today = new Date();
+  const thisYearStart = new Date(today.getFullYear(), 0, 1);
+  const prevYearStart = new Date(today.getFullYear() - 1, 0, 1);
+  const prevYearEnd = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+
+  const prevFunding = fundingRecords
+    .filter(r => r.receivedAt >= prevYearStart && r.receivedAt <= prevYearEnd)
+    .reduce((s, r) => s + r.amount, 0);
+
   // ── Youth Coding data ──────────────────────────────────
   const ycProgram = programs.find(p => p.name.toLowerCase().includes("youth coding"));
   const ycHubs = ycProgram ? hubs.filter(h => h.parentDepartmentId === ycProgram.id) : [];
@@ -69,6 +79,21 @@ export default async function ImpactPage() {
   const ycAvgAge = ycStudents
     ? await prisma.student.aggregate({ where: { age: { not: null }, departmentId: { in: ycHubIds } }, _avg: { age: true } })
     : { _avg: { age: null } };
+
+  // Monthly YC sessions for chart
+  const rawYcSessions = ycProgram ? await prisma.youthCodingSession.findMany({
+    where: { departmentId: { in: ycHubIds }, date: { gte: thisYearStart } },
+    select: { date: true },
+  }) : [];
+  const ycSessionsByMonth = Array.from({ length: 12 }, () => 0);
+  for (const s of rawYcSessions) {
+    ycSessionsByMonth[s.date.getMonth()]!++;
+  }
+
+  // Previous YTD YC sessions for trend
+  const prevYcSessions = ycProgram ? await prisma.youthCodingSession.count({
+    where: { departmentId: { in: ycHubIds }, date: { gte: prevYearStart, lte: prevYearEnd } },
+  }) : 0;
 
   // ── Bootcamp data ─────────────────────────────────────
   const bootcampProgram = programs.find(p => p.name.toLowerCase().includes("bootcamp"));
@@ -102,15 +127,24 @@ export default async function ImpactPage() {
     ]),
   );
 
+  const ycTrend = prevYcSessions > 0 ? Math.round(((ycSessions - prevYcSessions) / prevYcSessions) * 100) : null;
+  const fundingTrend = prevFunding > 0 ? Math.round(((totalFunding - prevFunding) / prevFunding) * 100) : null;
+  const costPerStudent = totalFunding > 0 && totalStudents > 0 ? Math.round(totalFunding / totalStudents) : null;
+  const completedStudents = ycProgram ? Math.round(ycStudents * (ycCompletion / 100)) : null;
+
+  const todayStr = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
   const overview = {
     totalStudents,
     totalPrograms: programs.length,
     totalHubs: hubIds.length,
     totalFunding,
+    fundingTrend,
+    costPerStudent,
     overallGender: overallGender.filter((g): g is typeof g & { gender: string } => g.gender !== null).map(g => ({ gender: g.gender, count: g._count })),
     overallSchools: overallSchools.length,
     overallCommunities: overallCommunities.length,
-    fundingRecords: fundingRecords.map(r => ({ id: r.id, source: r.source, description: r.description ?? "", amount: r.amount, receivedAt: r.receivedAt.toISOString() })),
+    todayStr,
   };
 
   const ycData = ycProgram ? {
@@ -121,7 +155,10 @@ export default async function ImpactPage() {
     communities: ycCommunities.length,
     avgAge: ycAvgAge._avg.age ? Math.round(ycAvgAge._avg.age * 10) / 10 : null,
     sessions: ycSessions,
+    sessionsTrend: ycTrend,
+    sessionsByMonth: ycSessionsByMonth,
     completionRate: ycCompletion,
+    completedStudents,
     gender: ycGender.filter((g): g is typeof g & { gender: string } => g.gender !== null).map(g => ({ gender: g.gender as string, count: g._count })),
     funding: programFunding[ycProgram.id] ?? 0,
   } : null;

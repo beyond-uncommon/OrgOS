@@ -53,8 +53,6 @@ export default async function SubmitSessionPage() {
         </Typography>
 
         <SessionForm
-          userId={user.id}
-          departmentId={user.departmentId}
           existingStudents={existingStudents.map(s => ({ id: s.id, name: s.name }))}
           departmentUsers={departmentUsers}
         />

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { logout } from "@/lib/auth/actions";
 
 const ROLE_LABEL: Record<string, string> = {
+  STUDENT:                      "Youth Coding Coordinator",
   INSTRUCTOR:                   "Instructor",
   HUB_LEAD:                     "Hub Lead",
   BOOTCAMP_MANAGER:             "Bootcamp Manager",

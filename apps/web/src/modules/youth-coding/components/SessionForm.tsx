@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Box, Button, TextField, Typography, Checkbox, FormControlLabel,
   Select, MenuItem, FormControl, InputLabel, OutlinedInput,
@@ -24,15 +25,11 @@ interface DeptUser {
 }
 
 interface SessionFormProps {
-  userId: string;
-  departmentId: string;
   existingStudents: ExistingStudent[];
   departmentUsers: DeptUser[];
 }
 
 export function SessionForm({
-  userId,
-  departmentId,
   existingStudents,
   departmentUsers,
 }: SessionFormProps) {
@@ -76,7 +73,7 @@ export function SessionForm({
     setLoading(true);
     setError(null);
 
-    const result = await submitSession(userId, departmentId, {
+    const result = await submitSession({
       phase1: { date, lessonNumber, projectName, school, community, instructorIds },
       attendance,
       newStudents: newStudents.filter(s => s.name && s.name.trim().length > 0).length > 0
@@ -94,9 +91,14 @@ export function SessionForm({
 
   if (success) {
     return (
-      <Alert severity="success" sx={{ mt: 2 }}>
-        Session submitted successfully.
-      </Alert>
+      <Box>
+        <Alert severity="success" sx={{ mt: 2, mb: 2 }}>
+          Session submitted successfully.
+        </Alert>
+        <Button component={Link} href={`/student`} variant="text" sx={{ color: "text.secondary" }}>
+          ← Back to Dashboard
+        </Button>
+      </Box>
     );
   }
 

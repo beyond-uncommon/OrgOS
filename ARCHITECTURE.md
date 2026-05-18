@@ -33,7 +33,7 @@ Users do not write reports. The system generates everything from daily inputs.
 │  dashboard-engine · intervention-engine             │
 ├─────────────────────────────────────────────────────┤
 │               Intelligence Layer                    │
-│   Metric Extraction · Standardization ·             │
+│   Metric Extraction · Anomaly Detection ·            │
 │   Anomaly Detection · Summary Drafting              │
 ├─────────────────────────────────────────────────────┤
 │                  Data Layer                         │
@@ -51,12 +51,15 @@ Users do not write reports. The system generates everything from daily inputs.
 │   └── web/                        # Next.js application
 ├── services/
 │   ├── ingestion-engine/           # Daily input handling + validation
-│   ├── metric-extraction/          # Claude-based extraction pipeline
+│   ├── metric-extraction/          # Groq-based extraction pipeline (hybrid)
+│   ├── anomaly-detection/          # Spike, gap, inconsistency detectors
+│   ├── intervention-engine/        # Alert creation + intervention tracking
 │   ├── report-generator/           # Weekly + monthly auto-generation
 │   ├── dashboard-engine/           # Live metric aggregation + snapshots
-│   └── intervention-engine/        # Alert creation + intervention tracking
+│   └── insight-engine/             # v1 aggregator + v2 predictive + v3 autonomous action + governance
 ├── packages/
-│   ├── ui/                         # Shared component library
+│   ├── db/                         # Prisma client + migrations + seed
+│   ├── ui/                         # Shared MUI component library
 │   ├── shared-types/               # Shared TypeScript types
 │   └── utils/                      # Shared utilities + env config
 ├── docs/
@@ -199,8 +202,13 @@ User
 ### Roles
 ```
 Role (enum)
-  INSTRUCTOR | DEPARTMENT_HEAD | PROGRAM_LEAD |
-  PROGRAM_MANAGER | HEAD_OF_OPERATIONS | ADMIN
+  INSTRUCTOR | HUB_LEAD | BOOTCAMP_MANAGER | PROGRAM_MANAGER |
+  COUNTRY_DIRECTOR | YOUTH_CODING_MANAGER | TEACHER_TRAINING_COORDINATOR |
+  HEAD_OF_DESIGN | HEAD_OF_DEVELOPMENT | HEAD_OF_OPERATIONS | ADMIN |
+  STUDENT | CAREER_DEVELOPMENT_OFFICER | REGIONAL_HUB_LEAD |
+  SAFEGUARDING | M_AND_E | MARKETING_COMMS_MANAGER |
+  BUSINESS_DEVELOPMENT_MANAGER | BUSINESS_DEVELOPMENT_ASSOCIATE |
+  HR_OFFICER | FINANCE_ADMIN_OFFICER
 ```
 
 ### Departments
@@ -216,13 +224,29 @@ Department
 DailyEntry
   id                UUID PK
   userId            → User
-  date              Date
+  departmentId      → Department
+  date              Date (unique per user per day)
   attendanceStatus  String (structured)
   outputCompleted   String (structured + narrative)
   blockers          String (narrative)
   engagementNotes   String (narrative)
   quickSummary      String (free text)
   status            SUBMITTED | PROCESSING | COMPLETE | FLAGGED
+  reportType        DAILY | INCIDENT | SESSION
+  totalStudents     Int? (pre-parsed)
+  studentsPresent   Int? (pre-parsed)
+  dropouts          Int? (pre-parsed)
+  engagementScore   String? (pre-parsed)
+  averageAge        Float?
+  femaleStudents    Int?
+  maleStudents      Int?
+  mentorshipPairs   Int?
+  otherGender       Int?
+  studentsInvolvedIds  Json?
+  dropoutStudentIds    Json?
+  dropoutReasons       Json?
+  guestsVisited     Boolean
+  guestNotes        String?
   createdAt
 ```
 
@@ -383,9 +407,11 @@ Rules:
 | Role | Data Scope |
 |------|-----------|
 | INSTRUCTOR | Own daily entries; own dept summaries (read) |
-| DEPARTMENT_HEAD | Full department entries + weekly/monthly reports |
-| PROGRAM_LEAD | Program-level aggregates across departments |
+| HUB_LEAD | Full department entries + weekly/monthly reports |
+| BOOTCAMP_MANAGER | Bootcamp program data + rollups |
 | PROGRAM_MANAGER | Cross-department program data + rollups |
+| COUNTRY_DIRECTOR | Country-level org data + all rollups |
+| YOUTH_CODING_MANAGER | Youth coding program data + rollups |
 | HEAD_OF_OPERATIONS | Full org data + all rollups |
 | ADMIN | Everything + system configuration |
 
@@ -417,29 +443,72 @@ Every ExtractedMetric and generated report stores the prompt version used.
 3. Core DB schema (all tables, nullable relations)
 
 ### Phase 2 — Intelligence
-4. Metric extraction pipeline (Claude, versioned prompts)
+4. Metric extraction pipeline (Groq, hybrid deterministic + LLM)
 5. Weekly report auto-generation
 6. Basic approval workflow (DRAFT → APPROVED)
 
 ### Phase 3 — Reporting
 7. Monthly report generation
-8. Dashboard MVP (department view, key metrics)
+8. Dashboard MVP (department, instructor, program, country views)
 
 ### Phase 4 — Interventions
 9. Anomaly detection + Alert creation
 10. Intervention tracking module
 
+### Phase 5+ — Completed
+11. Insight Engine v2 (predictive forecasting)
+12. Insight Engine v3 (autonomous action planning)
+13. Governance layer (board policies, audit)
+14. Youth coding module (sessions, QR attendance, student feedback)
+15. Impact dashboard (public, funding tracking)
+
+---
+
+## Testing
+
+Tests use **Vitest** (configured at root `vitest.config.ts`).
+
+| Service | Test Files |
+|---------|-----------|
+| anomaly-detection | 4 files: detectSpike, detectGap, detectInconsistency, severityRules |
+| insight-engine | 13 files: aggregators, analyzers, correlation, v2 predictors, v3 planners, governance |
+
+Run: `pnpm test` (all) or `pnpm --filter @orgos/<service> test` (per service).
+
+---
+
+## Shared UI Components
+
+All reusable components live in `packages/ui/src/components/` and are exported
+from `@orgos/ui`. Never re-implement in module code.
+
+| Component | Purpose |
+|-----------|---------|
+| MetricCard | KPI display with trend arrow and delta |
+| RiskCard | Alert display with severity-aware border styling |
+| InsightCard | AI-generated insight with confidence indicator |
+| InterventionCard | Action tracking with status transitions |
+| StatusChip | Unified status badge for all entity states |
+| DashboardGrid | Responsive Grid2 layout |
+| TimelineSwitcher | Daily/Weekly/Monthly toggle |
+| DataTable | MUI X DataGrid wrapper with pagination |
+| InsightPanel | Collapsible AI analysis accordion |
+
+Design system specification at `docs/design-system.md`.
+
 ---
 
 ## Architecture Decision Records
 
-```
-docs/architecture/
-  001-daily-entries-as-source-of-truth.md
-  002-all-reports-are-system-generated.md
-  003-hybrid-extraction-strategy.md
-  004-approval-workflow-design.md
-  005-hierarchical-rollup-engine.md
-  006-rbac-data-scoping.md
-  007-prompt-versioning.md
-```
+Full documentation at `docs/architecture/`:
+
+| # | Decision | Status |
+|---|----------|--------|
+| 001 | Daily entries as source of truth | Accepted |
+| 002 | All reports are system-generated | Accepted |
+| 003 | Hybrid extraction strategy (deterministic + LLM) | Accepted |
+| 004 | Approval workflow design with audit trail | Accepted |
+| 005 | Hierarchical rollup engine (pre-computed snapshots) | Accepted |
+| 006 | RBAC data scoping (3-layer enforcement) | Accepted |
+| 007 | Prompt versioning (never overwrite, always version) | Accepted |
+| 008 | Policy simulation engine (future phase) | Draft |

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   Alert,
   Autocomplete,
@@ -27,7 +28,6 @@ interface Student {
 }
 
 interface Props {
-  userId: string;
   departmentId: string;
   initialReportType?: ReportType;
   students?: Student[];
@@ -78,7 +78,7 @@ function SectionHeading({ children, color = "primary.main" }: { children: React.
   );
 }
 
-export function DailyEntryForm({ userId, departmentId, initialReportType = "DAILY", students = [] }: Props) {
+export function DailyEntryForm({ departmentId, initialReportType = "DAILY", students = [] }: Props) {
   const [reportType, setReportType] = React.useState<ReportType>(initialReportType);
   const [values, setValues] = React.useState<DailyEntryFormValues>(EMPTY(initialReportType));
   const [errors, setErrors] = React.useState<Partial<Record<keyof DailyEntryFormValues, string>>>({});
@@ -122,7 +122,7 @@ export function DailyEntryForm({ userId, departmentId, initialReportType = "DAIL
     }
     setStatus("submitting");
     setServerError(null);
-    const result = await submitDailyEntry(userId, departmentId, parsed.data);
+    const result = await submitDailyEntry(parsed.data);
     if (result.success) {
       setStatus("success");
       setValues(EMPTY(reportType));
@@ -159,11 +159,16 @@ export function DailyEntryForm({ userId, departmentId, initialReportType = "DAIL
           {meta.label} submitted
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 3, maxWidth: 320, mx: "auto" }}>
-          Your report is being processed. The intelligence layer will update shortly.
+          Your report has been submitted and is being analyzed. It will appear in your dashboard shortly.
         </Typography>
-        <Button variant="outlined" onClick={() => setStatus("idle")} sx={{ borderColor: "divider", color: "text.secondary", "&:hover": { borderColor: "primary.main", color: "primary.main" } }}>
-          Submit another
-        </Button>
+        <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+          <Button variant="outlined" onClick={() => setStatus("idle")} sx={{ borderColor: "divider", color: "text.secondary", "&:hover": { borderColor: "primary.main", color: "primary.main" } }}>
+            Submit another
+          </Button>
+          <Button component={Link} href={`/departments/${departmentId}`} variant="text" sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}>
+            Back to Dashboard
+          </Button>
+        </Box>
       </Box>
     );
   }

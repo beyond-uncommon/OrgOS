@@ -12,9 +12,12 @@
     "@orgos/intervention-engine": "workspace:*"
   },
   "scripts": {
-    "lint": "eslint src --ext .ts,.tsx"
+    "lint": "eslint src --ext .ts,.tsx",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^2.1.0"
   }
 }

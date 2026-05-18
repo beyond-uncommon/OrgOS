@@ -2,15 +2,18 @@ import { Box, Container, Typography } from "@mui/material";
 import { LoginForm } from "./LoginForm";
 
 const DEMO_ACCOUNTS = [
-  { role: "Instructor",           email: "alex.rivera@uncommon.org",  password: "instructor", access: "Submit daily reports, personal history" },
-  { role: "YC Student",           email: "yc.student1@uncommon.org",  password: "yc.student1", access: "Submit session reports, register youth coding students" },
-  { role: "Hub Lead",             email: "hublead@uncommon.org",      password: "hublead",    access: "Hub dashboard, instructor list, approval queue" },
-  { role: "Bootcamp Manager",     email: "bootcamp@uncommon.org",     password: "bootcamp",   access: "All hubs in bootcamp, rolled-up metrics" },
-  { role: "YC Manager",           email: "ycmanager@uncommon.org",    password: "ycmanager",  access: "Youth coding master database, all-hub student roster" },
-  { role: "Program Manager (Bootcamp)", email: "program@uncommon.org",       password: "program",    access: "Bootcamp Program — all bootcamps, rolled-up metrics" },
-  { role: "Program Manager (YC)",       email: "pm.yc@uncommon.org",         password: "pm.yc",      access: "Youth Coding Program overview" },
-  { role: "Country Director",     email: "director@uncommon.org",     password: "director",   access: "Org-wide KPIs, all programs, alerts" },
-  { role: "Admin",                email: "admin@uncommon.org",        password: "admin",      access: "Full access" },
+  { role: "Instructor",               email: "alex.rivera@uncommon.org",     password: "instructor",   access: "Submit daily reports, personal metrics" },
+  { role: "YC Instructor",            email: "instructor.yc1@uncommon.org",  password: "yc1",          access: "YC instructor dashboard, session data" },
+  { role: "YC Coordinator",           email: "yc.student1@uncommon.org",     password: "yc.student1",  access: "Submit sessions, manage students, QR attendance" },
+  { role: "Hub Lead",                 email: "hublead@uncommon.org",         password: "hublead",      access: "Hub dashboard, instructors, approvals, YC panel" },
+  { role: "Hub Lead (Hub 2)",         email: "hublead2@uncommon.org",        password: "hublead2",     access: "Hub 2 dashboard, lower-performance hub" },
+  { role: "Hub Lead (Hub 3)",         email: "hublead3@uncommon.org",        password: "hublead3",     access: "Hub 3 dashboard, active risk alerts" },
+  { role: "Bootcamp Manager",         email: "bootcamp@uncommon.org",        password: "bootcamp",     access: "All hubs across design bootcamps" },
+  { role: "YC Manager",               email: "ycmanager@uncommon.org",       password: "ycmanager",    access: "YC master database, all-hub student roster" },
+  { role: "Program Manager",          email: "program@uncommon.org",         password: "program",      access: "All programs — YC, Bootcamp, Teacher Training, Outreach" },
+  { role: "Teacher Training Coord",   email: "pm.tt@uncommon.org",           password: "pm.tt",        access: "Teacher Training program view" },
+  { role: "Country Director",         email: "director@uncommon.org",        password: "director",     access: "Org-wide KPIs, all programs, org alerts" },
+  { role: "Admin",                    email: "admin@uncommon.org",           password: "admin",        access: "Full system access" },
 ];
 
 export default function LoginPage() {

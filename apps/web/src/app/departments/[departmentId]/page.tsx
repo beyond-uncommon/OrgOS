@@ -2,7 +2,7 @@ import { Box, Container, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import Link from "next/link";
 import { getDepartmentDashboard, getRecentAlerts, getWeeklyInsightSnapshot, getDepartmentDailyReports } from "@/modules/dashboards/queries";
-import { getPendingActionsForDepartment, getApproverByEmail } from "@/modules/approvals/queries";
+import { getPendingActionsForDepartment } from "@/modules/approvals/queries";
 import { getDepartmentInstructors } from "@/modules/dashboards/instructor/queries";
 import { getYCHubSummary } from "@/modules/youth-coding/queries";
 import { YCPanel } from "@/modules/youth-coding/components/YCPanel";
@@ -16,8 +16,6 @@ import { ApprovalQueuePanel } from "@/modules/dashboards/department/ApprovalQueu
 import { DailyReportsSummary } from "@/modules/dashboards/department/DailyReportsSummary";
 import type { InsightReport } from "@orgos/shared-types";
 import type { Alert as AlertModel } from "@orgos/db";
-
-const DEMO_APPROVER_EMAIL = "hublead@uncommon.org";
 
 interface Props {
   params: Promise<{ departmentId: string }>;
@@ -58,12 +56,11 @@ export default async function DepartmentDashboardPage({ params }: Props) {
     else redirect("/coming-soon");
   }
 
-  const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, approver, instructors, dept, ycSummary, dailyReports] = await Promise.all([
+  const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, instructors, dept, ycSummary, dailyReports] = await Promise.all([
     getDepartmentDashboard(departmentId),
     getWeeklyInsightSnapshot(departmentId),
     getRecentAlerts(departmentId),
     getPendingActionsForDepartment(departmentId),
-    getApproverByEmail(DEMO_APPROVER_EMAIL),
     getDepartmentInstructors(departmentId),
     prisma.department.findUnique({ where: { id: departmentId }, select: { name: true } }),
     getYCHubSummary(departmentId),
@@ -327,9 +324,8 @@ export default async function DepartmentDashboardPage({ params }: Props) {
                   )}
                 </Box>
                 <Box sx={{ p: 3 }}>
-                  <ApprovalQueuePanel
+                    <ApprovalQueuePanel
                     actions={pendingActions}
-                    approverId={approver?.id ?? ""}
                   />
                 </Box>
               </Box>

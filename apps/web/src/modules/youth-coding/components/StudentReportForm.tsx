@@ -14,6 +14,7 @@ import {
   Alert,
 } from "@mui/material";
 import { submitStudentReport } from "../actions/submitStudentReport";
+import { ImageUploader } from "./ImageUploader";
 
 interface Student {
   id: string;
@@ -21,16 +22,16 @@ interface Student {
 }
 
 interface Props {
-  departmentId: string;
   students: Student[];
 }
 
-export function StudentReportForm({ departmentId, students }: Props) {
+export function StudentReportForm({ students }: Props) {
   const [studentId, setStudentId] = React.useState("");
   const [learned, setLearned] = React.useState("");
   const [enjoyed, setEnjoyed] = React.useState("");
   const [struggled, setStruggled] = React.useState("");
   const [rating, setRating] = React.useState(3);
+  const [imageUrls, setImageUrls] = React.useState<string[]>([]);
   const [submitting, setSubmitting] = React.useState(false);
   const [result, setResult] = React.useState<{ ok: boolean; message: string } | null>(null);
 
@@ -47,6 +48,7 @@ export function StudentReportForm({ departmentId, students }: Props) {
       enjoyed,
       struggled: struggled || undefined,
       rating,
+      imageUrls,
     });
 
     if (res.success) {
@@ -54,6 +56,7 @@ export function StudentReportForm({ departmentId, students }: Props) {
       setLearned("");
       setEnjoyed("");
       setStruggled("");
+      setImageUrls([]);
     } else {
       setResult({ ok: false, message: res.error });
     }
@@ -143,6 +146,10 @@ export function StudentReportForm({ departmentId, students }: Props) {
           ]}
           sx={{ maxWidth: 300, mx: "auto" }}
         />
+      </Box>
+
+      <Box sx={{ mb: 3 }}>
+        <ImageUploader images={imageUrls} onChange={setImageUrls} />
       </Box>
 
       <Button

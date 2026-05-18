@@ -11,6 +11,7 @@ const studentReportSchema = z.object({
   enjoyed: z.string().min(1).max(2000),
   struggled: z.string().max(2000).optional().default(""),
   rating: z.number().int().min(1).max(5).default(3),
+  imageUrls: z.array(z.string()).max(10).optional().default([]),
 });
 
 export async function submitStudentReport(
@@ -37,6 +38,7 @@ export async function submitStudentReport(
       enjoyed: parsed.data.enjoyed,
       struggled: parsed.data.struggled,
       rating: parsed.data.rating,
+      imageUrls: parsed.data.imageUrls,
     },
     select: { id: true },
   });

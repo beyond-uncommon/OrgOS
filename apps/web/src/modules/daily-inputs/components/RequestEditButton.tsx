@@ -25,7 +25,6 @@ interface EditRequest {
 
 interface Props {
   entryId: string;
-  userId: string;
   existingRequest: EditRequest | null;
 }
 
@@ -41,7 +40,7 @@ const STATUS_COLOR: Record<string, "default" | "warning" | "success" | "error"> 
   DENIED: "error",
 };
 
-export function RequestEditButton({ entryId, userId, existingRequest }: Props) {
+export function RequestEditButton({ entryId, existingRequest }: Props) {
   const [open, setOpen] = React.useState(false);
   const [note, setNote] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
@@ -72,7 +71,7 @@ export function RequestEditButton({ entryId, userId, existingRequest }: Props) {
   async function handleSubmit() {
     setSubmitting(true);
     setError(null);
-    const result = await requestEntryEdit(entryId, userId, note);
+    const result = await requestEntryEdit(entryId, note);
     setSubmitting(false);
     if (result.success) {
       setSubmitted(true);

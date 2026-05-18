@@ -2,16 +2,19 @@
 
 import { prisma } from "@orgos/db";
 import type { ActionResult } from "@orgos/utils";
+import { requireSession } from "@/lib/auth/requireSession";
 import { studentRegistrationSchema } from "../schema";
 import { z } from "zod";
 
 const bulkSchema = z.array(studentRegistrationSchema).min(1).max(500);
 
 export async function bulkRegisterStudents(
-  instructorId: string,
-  departmentId: string,
   rows: unknown[],
 ): Promise<ActionResult<{ created: number; skipped: number }>> {
+  const sessionUser = await requireSession();
+  const instructorId = sessionUser.id;
+  const departmentId = sessionUser.departmentId ?? undefined;
+  if (!departmentId) return { success: false, error: "No department assigned." };
   const parsed = bulkSchema.safeParse(rows);
   if (!parsed.success) {
     return { success: false, error: parsed.error.message };

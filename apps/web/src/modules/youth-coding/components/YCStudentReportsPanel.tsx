@@ -9,6 +9,7 @@ interface StudentReport {
   enjoyed: string;
   struggled: string | null;
   rating: number;
+  imageUrls?: string[];
   student: { name: string; department: { id: string; name: string } };
 }
 
@@ -84,6 +85,23 @@ export function YCStudentReportsPanel({ reports, hubFilter = "All Hubs" }: Props
               {report.enjoyed}
             </Typography>
           </Box>
+
+          {report.imageUrls?.map((url) => (
+            <Box
+              key={url}
+              component="img"
+              src={url}
+              alt=""
+              sx={{
+                width: 1, maxHeight: 200,
+                objectFit: "cover",
+                borderRadius: 1.5,
+                mb: 1,
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            />
+          ))}
 
           {report.struggled && (
             <Box>

@@ -1,17 +1,4 @@
-import {
-  PrismaClient,
-  Role,
-  EntryStatus,
-  AlertType,
-  Severity,
-  SnapshotScope,
-  PeriodType,
-  PendingActionStatus,
-  ActionExecutionMode,
-  ProjectStatus,
-} from "../../../apps/web/.prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma, Role, EntryStatus, AlertType, Severity, SnapshotScope, PeriodType, PendingActionStatus, ActionExecutionMode, ProjectStatus } from "@orgos/db";
 
 // ── Instructor roster: 5 per hub ─────────────────────────────────────────────
 const HUB1_INSTRUCTORS = [
@@ -135,91 +122,241 @@ async function seedInstructorEntries(
   }
 }
 
-const YC_SCHOOLS = ["Westside Primary", "Northgate Academy", "Sunridge School"];
-const YC_COMMUNITIES = ["Westlands", "Northgate", "Sunridge"];
-const YC_GRADES = ["5", "6", "7", "8"];
-const YC_GENDERS: ("M" | "F" | "Other")[] = ["M", "F", "M", "F", "Other"];
-const YC_PROJECTS = ["Scratch Game", "HTML Portfolio", "Python Quiz", "Micro:bit Sensor", "App Prototype"];
+const YC_SCHOOLS = ["Westside Primary", "Northgate Academy", "Sunridge School", "Hillcrest High", "Valley View"];
+const YC_COMMUNITIES = ["Westlands", "Northgate", "Sunridge", "Hillcrest", "Valley View"];
+const YC_GRADES = ["5", "6", "7", "8", "9", "10", "11", "12"];
+const YC_GENDERS: ("M" | "F" | "O")[] = ["M", "F", "M", "F", "O", "M", "F", "M"];
+const YC_PROJECTS = ["Scratch Game", "HTML Portfolio", "Python Quiz", "Micro:bit Sensor", "App Prototype", "Web Design", "Data Viz", "Game Dev"];
 
-async function seedYouthCoding(hubs: { id: string }[]) {
-  const studentUsers: { email: string; name: string }[] = [
-    { email: "yc.student1@uncommon.org", name: "Jamie Osei" },
-    { email: "yc.student2@uncommon.org", name: "Kezia Mwangi" },
-    { email: "yc.student3@uncommon.org", name: "Sipho Dlamini" },
+const YC_INSTRUCTORS = [
+  { email: "instructor.yc1@uncommon.org", name: "Kwame Asante" },
+  { email: "instructor.yc2@uncommon.org", name: "Zuri Okonkwo" },
+];
+
+const STUDENT_REPORT_TEMPLATES = [
+  { learned: "How to use loops in Python", enjoyed: "The coding challenges", struggled: "Understanding nested loops", rating: 4 },
+  { learned: "Basic HTML tags and structure", enjoyed: "Seeing my webpage come together", struggled: "CSS styling", rating: 5 },
+  { learned: "Variables and data types", enjoyed: "The interactive quiz game", struggled: "Type conversion", rating: 3 },
+  { learned: "Creating animations in Scratch", enjoyed: "Designing my own characters", struggled: "Timing the animation frames", rating: 4 },
+  { learned: "How sensors work with Micro:bit", enjoyed: "The physical computing projects", struggled: "Wiring the circuits", rating: 5 },
+  { learned: "Responsive web design principles", enjoyed: "Making mobile-friendly pages", struggled: "Media queries", rating: 4 },
+  { learned: "Data visualization with charts", enjoyed: "Seeing patterns in the data", struggled: "Choosing the right chart type", rating: 3 },
+  { learned: "Game design fundamentals", enjoyed: "Testing my friends games", struggled: "Balancing difficulty levels", rating: 5 },
+  { learned: "Functions and parameters", enjoyed: "Writing reusable code", struggled: "Return values", rating: 4 },
+  { learned: "CSS Flexbox and Grid", enjoyed: "The layout challenges", struggled: "Grid template areas", rating: 3 },
+];
+
+async function seedYouthCodingHub(
+  hub: { id: string },
+  today: Date,
+) {
+  // ── Create INSTRUCTOR users for this YC hub ────────────
+  const ycInstructors = await Promise.all(
+    YC_INSTRUCTORS.map((d) =>
+      prisma.user.create({ data: { email: d.email, name: d.name, role: Role.INSTRUCTOR, departmentId: hub.id } })
+    )
+  );
+
+  // ── Create STUDENT user (YC Coordinator) ───────────────
+  const ycCoordinator = await prisma.user.create({
+    data: { email: "yc.student1@uncommon.org", name: "Jamie Osei", role: Role.STUDENT, departmentId: hub.id },
+  });
+
+  const instructors = [ycInstructors[0]!, ycInstructors[1]!, ycCoordinator];
+
+  // ── Register 20 youth coding students ──────────────────
+  const ycStudents = await Promise.all(
+    Array.from({ length: 20 }, (_, i) => {
+      const nameSeed = 500 + i;
+      return prisma.student.create({
+        data: {
+          name: studentName(nameSeed),
+          departmentId: hub.id,
+          instructorId: ycInstructors[0]!.id,
+          enrollmentStatus: "ACTIVE",
+          age: 10 + (nameSeed % 9),
+          gender: YC_GENDERS[i % YC_GENDERS.length],
+          school: YC_SCHOOLS[nameSeed % YC_SCHOOLS.length],
+          grade: YC_GRADES[nameSeed % YC_GRADES.length],
+          community: YC_COMMUNITIES[nameSeed % YC_COMMUNITIES.length],
+        },
+      });
+    })
+  );
+
+  const studentIds = ycStudents.map(s => s.id);
+
+  // ── Create 10 weekly YC sessions ───────────────────────
+  const projectStatuses: ProjectStatus[] = [
+    ProjectStatus.COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.NOT_COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.NOT_COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.NOT_COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.NOT_COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.NOT_COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.NOT_COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.COMPLETE,
+    ProjectStatus.NOT_COMPLETE,
   ];
 
-  for (let hubIdx = 0; hubIdx < hubs.length; hubIdx++) {
-    const hub = hubs[hubIdx]!;
-    const su = studentUsers[hubIdx]!;
+  const sessionIds: string[] = [];
 
-    // Find first instructor in this hub (ordered by createdAt)
-    const firstInstructor = await prisma.user.findFirst({
-      where: { departmentId: hub.id, role: Role.INSTRUCTOR },
-      orderBy: { createdAt: "asc" },
-    });
+  for (let s = 0; s < 10; s++) {
+    const sessionDate = new Date(today);
+    sessionDate.setDate(today.getDate() - (s + 1) * 7);
+    sessionDate.setHours(0, 0, 0, 0);
 
-    const studentUser = await prisma.user.create({
+    // Vary attendance: first sessions have more students present
+    const absentCount = Math.min(s, 7);
+    const presentIds = studentIds.slice(absentCount);
+
+    const session = await prisma.youthCodingSession.create({
       data: {
-        email: su.email,
-        name: su.name,
-        role: Role.STUDENT,
+        date: sessionDate,
+        lessonNumber: s + 1,
+        projectName: YC_PROJECTS[s % YC_PROJECTS.length]!,
+        school: YC_SCHOOLS[s % YC_SCHOOLS.length]!,
+        community: YC_COMMUNITIES[s % YC_COMMUNITIES.length]!,
         departmentId: hub.id,
+        submittedById: ycCoordinator.id,
+        instructorIds: [ycInstructors[0]!.id, ycInstructors[1]!.id],
+        attendance: {
+          create: presentIds.map((sid, i) => ({
+            studentId: sid,
+            projectStatus: projectStatuses[i % projectStatuses.length]!,
+          })),
+        },
       },
     });
+    sessionIds.push(session.id);
+  }
 
-    // Register 5 youth coding students under this STUDENT user
-    const ycStudents = await Promise.all(
-      Array.from({ length: 5 }, (_, i) => {
-        const nameSeed = hubIdx * 5 + i;
-        return prisma.student.create({
-          data: {
-            name: studentName(100 + nameSeed),
-            departmentId: hub.id,
-            instructorId: studentUser.id,
-            enrollmentStatus: "ACTIVE",
-            age: 7 + (nameSeed % 7),
-            gender: YC_GENDERS[i % YC_GENDERS.length],
-            school: YC_SCHOOLS[nameSeed % YC_SCHOOLS.length],
-            grade: YC_GRADES[nameSeed % YC_GRADES.length],
-            community: YC_COMMUNITIES[nameSeed % YC_COMMUNITIES.length],
-          },
-        });
-      })
-    );
+  // ── Create student reports for last 3 sessions ─────────
+  for (let s = 7; s < 10; s++) {
+    const reportDate = new Date(today);
+    reportDate.setDate(today.getDate() - (s + 1) * 7 + 1);
+    reportDate.setHours(0, 0, 0, 0);
 
-    // Submit 3 sessions for this STUDENT user
-    for (let s = 0; s < 3; s++) {
-      const sessionDate = new Date();
-      sessionDate.setDate(sessionDate.getDate() - (s + 1) * 7);
-      sessionDate.setHours(0, 0, 0, 0);
-
-      const projectStatuses: ProjectStatus[] = [
-        ProjectStatus.COMPLETE,
-        ProjectStatus.COMPLETE,
-        ProjectStatus.NOT_COMPLETE,
-        ProjectStatus.COMPLETE,
-        ProjectStatus.NOT_COMPLETE,
-      ];
-
-      await prisma.youthCodingSession.create({
+    for (const studentId of studentIds) {
+      const template = STUDENT_REPORT_TEMPLATES[(s + studentId.length) % STUDENT_REPORT_TEMPLATES.length]!;
+      await prisma.studentReport.create({
         data: {
-          date: sessionDate,
-          lessonNumber: s + 1,
-          projectName: YC_PROJECTS[s % YC_PROJECTS.length]!,
-          school: YC_SCHOOLS[hubIdx % YC_SCHOOLS.length]!,
-          community: YC_COMMUNITIES[hubIdx % YC_COMMUNITIES.length]!,
-          departmentId: hub.id,
-          submittedById: studentUser.id,
-          instructorIds: firstInstructor ? [firstInstructor.id] : [],
-          attendance: {
-            create: ycStudents.map((stu, i) => ({
-              studentId: stu.id,
-              projectStatus: projectStatuses[i % projectStatuses.length]!,
-            })),
-          },
+          studentId,
+          date: reportDate,
+          learned: template.learned,
+          enjoyed: template.enjoyed,
+          struggled: template.struggled,
+          rating: template.rating + (s % 2 === 0 ? 0 : -1),
         },
       });
     }
+  }
+
+  // ── Daily entries for YC instructors (14 days) ─────────
+  for (const instructor of ycInstructors) {
+    for (let daysAgo = 1; daysAgo <= 14; daysAgo++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - daysAgo);
+      date.setHours(0, 0, 0, 0);
+
+      const existing = await prisma.dailyEntry.findUnique({
+        where: { userId_date: { userId: instructor.id, date } },
+      });
+      if (existing) continue;
+
+      const seed = instructor.id.charCodeAt(0) + daysAgo;
+      const studentsPresent = 16 + (seed % 7);
+      const dropouts = daysAgo % 7 === 0 ? 1 : 0;
+
+      await prisma.dailyEntry.create({
+        data: {
+          userId: instructor.id,
+          departmentId: hub.id,
+          date,
+          status: EntryStatus.COMPLETE,
+          reportType: "DAILY",
+          attendanceStatus: studentsPresent >= 20 ? "All students present" : `${20 - studentsPresent} absent`,
+          outputCompleted: `Lesson ${seed % 10 + 1} completed. ${studentsPresent} students attended.`,
+          blockers: daysAgo % 5 === 0 ? "Internet connectivity issues in afternoon session." : "",
+          engagementNotes: "",
+          quickSummary: daysAgo < 7 ? "Productive session. Students progressing well." : "Good engagement with new project work.",
+          totalStudents: 20,
+          studentsPresent,
+          dropouts,
+          engagementScore: daysAgo < 4 ? "HIGH" : daysAgo < 10 ? "MEDIUM" : "LOW",
+          guestsVisited: false,
+        },
+      });
+    }
+  }
+
+  // ── 1 Monthly report for the YC hub ───────────────────
+  await prisma.monthlyReport.create({
+    data: {
+      periodMonth: today.getMonth() + 1,
+      periodYear: today.getFullYear(),
+      departmentId: hub.id,
+      status: "APPROVED",
+      promptVersion: "monthly-summary-v1",
+      generatedContent: {
+        summary: "Monthly report for YC program. Consistent attendance with good engagement trends.",
+        highlights: ["10 sessions conducted", "Average attendance 18/20 students", "3 projects completed per student"],
+        challenges: ["Internet connectivity issues in 2 sessions", "3 students need catch-up sessions"],
+      },
+      generatedMetrics: {
+        totalSessions: 10,
+        avgAttendance: 18,
+        completionRate: 78,
+        genderBreakdown: { male: 10, female: 8, other: 2 },
+      },
+      risks: [],
+      originalContent: {},
+      editLog: [],
+    },
+  });
+
+  // ── 2 Weekly reports for the YC hub ────────────────────
+  for (let w = 0; w < 2; w++) {
+    const weekEnd = new Date(today);
+    weekEnd.setDate(today.getDate() - w * 7);
+    weekEnd.setHours(0, 0, 0, 0);
+    const weekStart = new Date(weekEnd);
+    weekStart.setDate(weekStart.getDate() - 6);
+
+    await prisma.weeklyReport.create({
+      data: {
+        weekStart,
+        weekEnd,
+        departmentId: hub.id,
+        status: "APPROVED",
+        promptVersion: "weekly-summary-v1",
+        generatedContent: {
+          summary: `Week ${w + 1} of YC program at ${hub.name}. Average attendance ${16 + (w * 2)} students per session.`,
+          highlights: ["Students completed web design projects", "High engagement in coding exercises"],
+          challenges: ["Some students need extra support with JavaScript concepts"],
+        },
+        generatedMetrics: {
+          totalSessions: 5,
+          avgAttendance: 16 + (w * 2),
+          completionRate: 65 + (w * 5),
+          genderBreakdown: { male: 10, female: 8, other: 2 },
+        },
+        risks: [],
+        originalContent: {},
+        editLog: [],
+      },
+    });
   }
 }
 
@@ -227,8 +364,28 @@ async function main() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // ── Clear existing data using CASCADE to avoid FK ordering issues ────────
-  await prisma.$executeRawUnsafe(`TRUNCATE TABLE "EntryEditRequest", "EntryComment", "Intervention", "Alert", "ExtractedMetric", "DailyEntry", "PendingAction", "DashboardSnapshot", "BoardPolicy", "OutcomeRecord", "GovernanceAuditRecord", "SessionAttendance", "YouthCodingSession", "Student", "WeeklyReport", "MonthlyReport", "User" CASCADE`);
+  // ── Clear existing data in dependency order (safe for pooled connections) ─
+  await prisma.entryEditRequest.deleteMany();
+  await prisma.entryComment.deleteMany();
+  await prisma.intervention.deleteMany();
+  await prisma.alert.deleteMany();
+  await prisma.extractedMetric.deleteMany();
+  await prisma.dailyEntry.deleteMany();
+  await prisma.studentReport.deleteMany();
+  await prisma.sessionAttendance.deleteMany();
+  await prisma.youthCodingSession.deleteMany();
+  await prisma.student.deleteMany();
+  await prisma.pendingAction.deleteMany();
+  await prisma.dashboardSnapshot.deleteMany();
+  await prisma.boardPolicy.deleteMany();
+  await prisma.outcomeRecord.deleteMany();
+  await prisma.governanceAuditRecord.deleteMany();
+  await prisma.weeklyReport.deleteMany();
+  await prisma.monthlyReport.deleteMany();
+  await prisma.fundingRecord.deleteMany();
+  await prisma.attendanceRecord.deleteMany();
+  await prisma.attendanceSession.deleteMany();
+  await prisma.user.deleteMany();
   // Delete departments leaf-first to respect self-referential FK
   await prisma.department.deleteMany({ where: { parentDepartmentId: { not: null } } });
   await prisma.department.deleteMany();
@@ -315,6 +472,20 @@ async function main() {
   await prisma.user.create({
     data: { email: "admin@uncommon.org", name: "Admin User", role: Role.ADMIN, departmentId: org.id },
   });
+
+  // ── Remaining roles (one demo user each for coverage) ─────────────────────
+  await prisma.user.create({ data: { email: "head.design@uncommon.org", name: "Aria Chen", role: Role.HEAD_OF_DESIGN, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "head.dev@uncommon.org", name: "Elena Voss", role: Role.HEAD_OF_DEVELOPMENT, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "head.ops@uncommon.org", name: "Omar Hassan", role: Role.HEAD_OF_OPERATIONS, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "career.dev@uncommon.org", name: "Lila Mbeki", role: Role.CAREER_DEVELOPMENT_OFFICER, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "regional.hub@uncommon.org", name: "Carlos Mendez", role: Role.REGIONAL_HUB_LEAD, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "safeguarding@uncommon.org", name: "Ngozi Adebayo", role: Role.SAFEGUARDING, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "mande@uncommon.org", name: "Suki Tanaka", role: Role.M_AND_E, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "marketing@uncommon.org", name: "Liam O'Brien", role: Role.MARKETING_COMMS_MANAGER, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "bizdev.mgr@uncommon.org", name: "Fatima Al-Rashid", role: Role.BUSINESS_DEVELOPMENT_MANAGER, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "bizdev.assoc@uncommon.org", name: "James Kariuki", role: Role.BUSINESS_DEVELOPMENT_ASSOCIATE, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "hr@uncommon.org", name: "Priya Sharma", role: Role.HR_OFFICER, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "finance@uncommon.org", name: "Kwame Asare", role: Role.FINANCE_ADMIN_OFFICER, departmentId: org.id } });
 
   // ── Instructors ───────────────────────────────────────────────────────────
   const hub1Instructors = await Promise.all(
@@ -532,8 +703,8 @@ async function main() {
     },
   });
 
-  // ── Youth Coding seed data ────────────────────────────────────────────────
-  await seedYouthCoding([ycHub1, ycHub2, ycHub3]);
+  // ── Youth Coding seed data (Dzivarasekwa Hub only) ────────────────────────
+  await seedYouthCodingHub(ycHub1, today);
 
   console.log("✓ Seed complete.");
   console.log(`  Org tree: ${org.name} → [${progYC.name} | ${progOutreach.name} | ${progBootcamp.name} | ${progTeacherTraining.name}]`);
@@ -556,15 +727,18 @@ async function main() {
   }
 
   console.log(`  Bootcamp path: ${progBootcamp.name} → ${bootcamp.name} → ${hub1.name} / ${hub2.name} / ${hub3.name}`);
-  console.log(`  YC Hubs: ${ycHub1.name} / ${ycHub2.name} / ${ycHub3.name}`);
-  console.log(`  Instructors: ${allInstructors.length} (5 per hub)`);
-  console.log(`  Demo instructor: ${demoInstructor.email}`);
+  console.log(`  YC Hub: ${ycHub1.name} (20 students, 10 sessions, 60 reports, 2 instructors)`);
+  console.log(`  Instructors: ${allInstructors.length + 2} total (5 per bootcamp hub + 2 YC hub)`);
+  console.log(`  YC Instructor: instructor.yc1@uncommon.org`);
+  console.log(`  Demo instructor (bootcamp): ${demoInstructor.email}`);
   console.log(`  Hub Lead (Hub 1): hublead@uncommon.org / hublead`);
   console.log(`  Bootcamp Manager: bootcamp@uncommon.org / bootcamp`);
-  console.log(`  Program Managers: program@uncommon.org (Bootcamp) / pm.yc@uncommon.org (YC) / pm.outreach@uncommon.org (Outreach) / pm.tt@uncommon.org (Teacher Training)`);
+  console.log(`  Program Manager: program@uncommon.org / program`);
   console.log(`  Country Director: director@uncommon.org / director`);
-  console.log(`  YC Students: yc.student1@uncommon.org / yc.student2@uncommon.org / yc.student3@uncommon.org`);
+  console.log(`  YC Coordinator: yc.student1@uncommon.org / yc.student1`);
   console.log(`  YC Manager: ycmanager@uncommon.org`);
+  console.log(`  ${12} additional roles seeded (head.design through finance)`);
+  console.log(`  Monthly Report seeded for YC hub`);
 }
 
 main()

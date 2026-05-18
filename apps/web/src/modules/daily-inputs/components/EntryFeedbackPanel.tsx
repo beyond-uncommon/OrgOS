@@ -30,8 +30,6 @@ interface EditRequest {
 
 interface Props {
   entryId: string;
-  reviewerId: string;
-  reviewerRole: string;
   initialComments: Comment[];
   editRequest: EditRequest | null;
 }
@@ -46,7 +44,7 @@ function timeAgo(date: Date) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export function EntryFeedbackPanel({ entryId, reviewerId, reviewerRole, initialComments, editRequest }: Props) {
+export function EntryFeedbackPanel({ entryId, initialComments, editRequest }: Props) {
   const [comments, setComments] = React.useState<Comment[]>(initialComments);
   const [body, setBody] = React.useState("");
   const [posting, setPosting] = React.useState(false);
@@ -59,7 +57,7 @@ export function EntryFeedbackPanel({ entryId, reviewerId, reviewerRole, initialC
   async function handleComment() {
     setPosting(true);
     setCommentError(null);
-    const result = await addEntryComment(entryId, reviewerId, body);
+    const result = await addEntryComment(entryId, body);
     setPosting(false);
     if (result.success) {
       setComments((prev) => [
@@ -68,7 +66,7 @@ export function EntryFeedbackPanel({ entryId, reviewerId, reviewerRole, initialC
           id: result.data.id,
           body: body.trim(),
           createdAt: new Date(),
-          author: { id: reviewerId, name: "You", role: reviewerRole },
+          author: { id: "session", name: "You", role: "session" },
         },
       ]);
       setBody("");
@@ -79,7 +77,7 @@ export function EntryFeedbackPanel({ entryId, reviewerId, reviewerRole, initialC
 
   async function handleReview(decision: "APPROVED" | "DENIED") {
     setReviewing(true);
-    const result = await reviewEditRequest(request!.id, reviewerId, decision, reviewNote || undefined);
+    const result = await reviewEditRequest(request!.id, decision, reviewNote || undefined);
     setReviewing(false);
     if (result.success) {
       setRequest((prev) => prev ? { ...prev, status: decision, reviewNote: reviewNote || null } : prev);

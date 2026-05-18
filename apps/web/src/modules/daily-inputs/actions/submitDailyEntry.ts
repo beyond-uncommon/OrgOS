@@ -5,12 +5,16 @@ import { logError, withRetry } from "@orgos/utils";
 import type { ActionResult } from "@orgos/utils";
 import type { DailyEntry } from "@orgos/shared-types";
 import { dailyEntryFormSchema } from "../schema";
+import { requireSession } from "@/lib/auth/requireSession";
 
 export async function submitDailyEntry(
-  userId: string,
-  departmentId: string,
   formData: unknown,
 ): Promise<ActionResult<DailyEntry>> {
+  const sessionUser = await requireSession();
+  const userId = sessionUser.id;
+  const departmentId = sessionUser.departmentId ?? undefined;
+  if (!departmentId) return { success: false, error: "No department assigned." };
+
   const parsed = dailyEntryFormSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false, error: parsed.error.message };

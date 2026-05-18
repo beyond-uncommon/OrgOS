@@ -65,6 +65,23 @@ export function StudentReportsPanel({ reports }: Props) {
             </Typography>
           </Box>
 
+          {(report as unknown as { imageUrls?: string[] }).imageUrls?.map((url: string) => (
+            <Box
+              key={url}
+              component="img"
+              src={url}
+              alt=""
+              sx={{
+                width: 1, maxHeight: 200,
+                objectFit: "cover",
+                borderRadius: 1.5,
+                mb: 1,
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            />
+          ))}
+
           {report.struggled && (
             <Box>
               <Typography variant="caption" sx={{ color: "error.main", fontWeight: 600 }}>

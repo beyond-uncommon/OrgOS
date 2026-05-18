@@ -2,13 +2,17 @@
 
 import { prisma } from "@orgos/db";
 import type { ActionResult } from "@orgos/utils";
+import { requireSession } from "@/lib/auth/requireSession";
 import { studentRegistrationSchema } from "../schema";
 
 export async function registerStudent(
-  instructorId: string,
-  departmentId: string,
   formData: unknown,
 ): Promise<ActionResult<{ id: string; name: string }>> {
+  const sessionUser = await requireSession();
+  const instructorId = sessionUser.id;
+  const departmentId = sessionUser.departmentId ?? undefined;
+  if (!departmentId) return { success: false, error: "No department assigned." };
+
   const parsed = studentRegistrationSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false, error: parsed.error.message };

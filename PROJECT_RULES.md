@@ -123,7 +123,7 @@ export async function submitDailyEntry(input: unknown) {
 
 - Every ExtractedMetric stores: `source` (STRUCTURED / NARRATIVE / INFERRED), `confidence`, and `promptVersion`.
 - Extraction results are Zod-validated before persistence.
-- Deterministic extraction runs before LLM extraction — do not call Claude for values that can be parsed directly.
+- Deterministic extraction runs before LLM extraction — do not call the LLM for values that can be parsed directly.
 - Confidence below a threshold triggers a `flagged: true` state and may generate an Alert.
 
 ---

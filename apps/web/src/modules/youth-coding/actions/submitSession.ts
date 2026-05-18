@@ -3,13 +3,17 @@
 import { prisma, ProjectStatus, EntryStatus } from "@orgos/db";
 import type { ActionResult } from "@orgos/utils";
 import { toDateOnly } from "@orgos/utils";
+import { requireSession } from "@/lib/auth/requireSession";
 import { sessionSubmissionSchema } from "../schema";
 
 export async function submitSession(
-  submittedById: string,
-  departmentId: string,
   formData: unknown,
 ): Promise<ActionResult<{ id: string }>> {
+  const sessionUser = await requireSession();
+  const submittedById = sessionUser.id;
+  const departmentId = sessionUser.departmentId ?? undefined;
+  if (!departmentId) return { success: false, error: "No department assigned." };
+
   const parsed = sessionSubmissionSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false, error: parsed.error.message };

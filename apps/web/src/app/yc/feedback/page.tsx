@@ -50,7 +50,7 @@ export default async function StudentFeedbackPage({ searchParams }: Props) {
             </Typography>
           </Box>
         ) : (
-          <StudentReportForm departmentId={departmentId} students={students} />
+          <StudentReportForm students={students} />
         )}
       </Container>
     </Box>

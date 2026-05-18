@@ -46,7 +46,7 @@ export default async function StudentDashboardPage() {
           {user.name}
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 4 }}>
-          Youth Coding Coordinator
+          {user.role === "STUDENT" ? "Youth Coding Coordinator" : user.role}
         </Typography>
 
         <Box sx={{ display: "flex", gap: 4, mb: 5, flexWrap: "wrap" }}>

@@ -1,31 +1,17 @@
 import { Box, Container, Typography } from "@mui/material";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { DailyEntryForm } from "@/modules/daily-inputs/components/DailyEntryForm";
 import { getSessionUser } from "@/lib/auth/session";
 import { getStudentsForInstructor } from "@/modules/dashboards/instructor/queries";
 import { UserBar } from "@/components/UserBar";
 
-interface Props {
-  searchParams: Promise<{ userId?: string; departmentId?: string }>;
-}
-
-export default async function SubmitPage({ searchParams }: Props) {
-  const [{ userId, departmentId }, sessionUser] = await Promise.all([
-    searchParams,
-    getSessionUser(),
-  ]);
-
-  const students = userId ? await getStudentsForInstructor(userId) : [];
-
-  if (!userId || !departmentId) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 8 }}>
-        <Typography sx={{ color: "error.main", fontSize: "0.875rem" }}>
-          Missing userId or departmentId in URL params.
-        </Typography>
-      </Container>
-    );
-  }
+export default async function SubmitPage() {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) redirect("/login");
+  const user = sessionUser!;
+  const departmentId = user.departmentId ?? "";
+  const students = await getStudentsForInstructor(user.id);
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
@@ -44,10 +30,10 @@ export default async function SubmitPage({ searchParams }: Props) {
               Org<Box component="span" sx={{ color: "primary.main" }}>OS</Box>
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              {sessionUser && <UserBar name={sessionUser.name} role={sessionUser.role} />}
+              <UserBar name={user.name} role={user.role} />
               <Typography
               component={Link}
-              href="/departments/dept-design"
+              href={`/departments/${departmentId}`}
               sx={{
                 fontSize: "0.75rem",
                 color: "text.secondary",
@@ -72,12 +58,11 @@ export default async function SubmitPage({ searchParams }: Props) {
             Submit Report
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
-            Choose a report type below. Every submission drives the intelligence layer —
-            anomaly detection, insight generation, and intervention triggers.
+            Choose a report type below. Your input helps track trends, detect issues, and generate insights for your department.
           </Typography>
         </Box>
 
-        <DailyEntryForm userId={userId} departmentId={departmentId} students={students} />
+        <DailyEntryForm departmentId={departmentId} students={students} />
       </Container>
     </Box>
   );

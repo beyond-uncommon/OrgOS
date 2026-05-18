@@ -2,15 +2,16 @@
 
 import { prisma, PendingActionStatus } from "@orgos/db";
 import type { ActionResult } from "@orgos/utils";
+import { requireSession } from "@/lib/auth/requireSession";
 
 export async function approvePendingAction(
   pendingActionId: string,
-  approverId: string,
 ): Promise<ActionResult<void>> {
+  const sessionUser = await requireSession();
   try {
     await prisma.pendingAction.update({
       where: { id: pendingActionId },
-      data: { status: PendingActionStatus.APPROVED, approvedById: approverId || null },
+      data: { status: PendingActionStatus.APPROVED, approvedById: sessionUser.id },
     });
     return { success: true, data: undefined };
   } catch (err) {
@@ -20,12 +21,12 @@ export async function approvePendingAction(
 
 export async function rejectPendingAction(
   pendingActionId: string,
-  rejectorId: string,
 ): Promise<ActionResult<void>> {
+  const sessionUser = await requireSession();
   try {
     await prisma.pendingAction.update({
       where: { id: pendingActionId },
-      data: { status: PendingActionStatus.REJECTED, rejectedById: rejectorId || null },
+      data: { status: PendingActionStatus.REJECTED, rejectedById: sessionUser.id },
     });
     return { success: true, data: undefined };
   } catch (err) {

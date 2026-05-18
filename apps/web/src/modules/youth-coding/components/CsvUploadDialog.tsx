@@ -13,8 +13,6 @@ import type { StudentRegistrationInput } from "../schema";
 interface Props {
   open: boolean;
   onClose: () => void;
-  instructorId: string;
-  departmentId: string;
   onComplete: (created: number) => void;
 }
 
@@ -61,7 +59,7 @@ function parseCsv(text: string): ParsedRow[] {
   });
 }
 
-export function CsvUploadDialog({ open, onClose, instructorId, departmentId, onComplete }: Props) {
+export function CsvUploadDialog({ open, onClose, onComplete }: Props) {
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{ created: number; skipped: number } | null>(null);
@@ -91,7 +89,7 @@ export function CsvUploadDialog({ open, onClose, instructorId, departmentId, onC
   async function handleUpload() {
     setUploading(true);
     setError(null);
-    const res = await bulkRegisterStudents(instructorId, departmentId, validRows.map(({ _error: _, ...r }) => r));
+    const res = await bulkRegisterStudents(validRows.map(({ _error: _, ...r }) => r));
     setUploading(false);
     if (!res.success) {
       setError(res.error ?? "Upload failed");

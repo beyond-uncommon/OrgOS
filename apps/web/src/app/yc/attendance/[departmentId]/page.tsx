@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import { CheckInPanel } from "@/modules/youth-coding/components/CheckInPanel";
 import { Box, Container, Typography, Collapse, Button } from "@mui/material";
 import { getOrCreateTodaySession } from "@/modules/youth-coding/actions/markHubAttendance";
+import { requireSession } from "@/lib/auth/requireSession";
 
 interface Props {
   params: Promise<{ departmentId: string }>;
@@ -11,6 +12,7 @@ interface Props {
 
 export default async function HubAttendancePage({ params }: Props) {
   const { departmentId } = await params;
+  await requireSession();
 
   const department = await prisma.department.findUnique({
     where: { id: departmentId },

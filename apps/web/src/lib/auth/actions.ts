@@ -9,7 +9,7 @@ import { getDemoPasswords } from "./demo-passwords";
 
 async function setSessionAndRedirect(userId: string, role: string, departmentId: string | null) {
   const jar = await cookies();
-  jar.set(getSessionCookieName(), userId, {
+  jar.set(getSessionCookieName(), `${role}:${userId}`, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",

@@ -12,8 +12,6 @@ import type { StudentRegistrationInput } from "../schema";
 interface Props {
   open: boolean;
   onClose: () => void;
-  instructorId: string;
-  departmentId: string;
   onCreated: (student: { id: string; name: string; age: number | null; gender: string | null; school: string | null; grade: string | null; community: string | null; enrollmentStatus: string }) => void;
 }
 
@@ -26,7 +24,7 @@ const EMPTY: StudentRegistrationInput = {
   community: "",
 };
 
-export function AddStudentDialog({ open, onClose, instructorId, departmentId, onCreated }: Props) {
+export function AddStudentDialog({ open, onClose, onCreated }: Props) {
   const [form, setForm] = useState<StudentRegistrationInput>(EMPTY);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -38,7 +36,7 @@ export function AddStudentDialog({ open, onClose, instructorId, departmentId, on
   async function handleSubmit() {
     setSaving(true);
     setError(null);
-    const result = await registerStudent(instructorId, departmentId, form);
+    const result = await registerStudent(form);
     setSaving(false);
     if (!result.success) {
       setError(result.error ?? "Failed to register student");

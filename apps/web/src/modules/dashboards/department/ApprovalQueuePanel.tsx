@@ -16,10 +16,9 @@ const PRIORITY_LABEL: Record<number, string> = { 0: "P0", 1: "P1", 2: "P2", 3: "
 
 interface Props {
   actions: PendingActionRow[];
-  approverId: string;
 }
 
-export function ApprovalQueuePanel({ actions, approverId }: Props) {
+export function ApprovalQueuePanel({ actions }: Props) {
   const router = useRouter();
   const [resolving, setResolving] = React.useState<string | null>(null);
   const [feedback, setFeedback] = React.useState<{
@@ -30,7 +29,7 @@ export function ApprovalQueuePanel({ actions, approverId }: Props) {
 
   async function handleApprove(actionId: string) {
     setResolving(actionId);
-    const result = await approvePendingAction(actionId, approverId);
+    const result = await approvePendingAction(actionId);
     setResolving(null);
     if (result.success) {
       setFeedback({ id: actionId, message: "Approved.", type: "success" });
@@ -42,7 +41,7 @@ export function ApprovalQueuePanel({ actions, approverId }: Props) {
 
   async function handleReject(actionId: string) {
     setResolving(actionId);
-    const result = await rejectPendingAction(actionId, approverId);
+    const result = await rejectPendingAction(actionId);
     setResolving(null);
     if (result.success) {
       setFeedback({ id: actionId, message: "Rejected.", type: "success" });

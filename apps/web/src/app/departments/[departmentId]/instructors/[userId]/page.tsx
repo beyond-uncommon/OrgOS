@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { prisma } from "@orgos/db";
 import { Box, Button, Chip, Container, Stack, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import Link from "next/link";
@@ -88,7 +89,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default async function InstructorPage({ params }: Props) {
   const { departmentId, userId } = await params;
 
-  const [instructor, entries, rawAlerts, students, ycSummary, studentReports, ycSessions] = await Promise.all([
+  const [instructor, entries, rawAlerts, students, ycSummary, studentReports, ycSessions, department] = await Promise.all([
     getInstructorProfile(userId),
     getInstructorDailyEntries(userId, 30),
     getInstructorAlerts(userId),
@@ -96,11 +97,13 @@ export default async function InstructorPage({ params }: Props) {
     getYCInstructorSummary(userId),
     getStudentReportsForInstructor(userId, 7),
     getYCSessionsForInstructor(userId, 7),
+    prisma.department.findUnique({ where: { id: departmentId }, select: { name: true } }),
   ]);
 
   const studentMap = new Map(students.map((s) => [s.id, s.name]));
 
-  if (!instructor || instructor.departmentId !== departmentId) notFound();
+  if (!instructor || !department || instructor.departmentId !== departmentId) notFound();
+  const deptName = department.name;
 
   const sessionUser = await import("@/lib/auth/session").then((m) => m.getSessionUser());
   const isOwnProfile = sessionUser?.id === userId;
@@ -571,15 +574,12 @@ export default async function InstructorPage({ params }: Props) {
                   {isOwnProfile && (
                     <RequestEditButton
                       entryId={entry.id}
-                      userId={userId}
                       existingRequest={entry.editRequests[0] ?? null}
                     />
                   )}
                   {isDeptHead && sessionUser && (
                     <EntryFeedbackPanel
                       entryId={entry.id}
-                      reviewerId={sessionUser.id}
-                      reviewerRole={sessionUser.role}
                       initialComments={entry.comments as { id: string; body: string; createdAt: Date; author: { id: string; name: string; role: string } }[]}
                       editRequest={entry.editRequests[0] ?? null}
                     />
@@ -724,11 +724,11 @@ export default async function InstructorPage({ params }: Props) {
                   variant="body2"
                   sx={{ color: "text.secondary", textDecoration: "none", "&:hover": { color: "primary.main" } }}
                 >
-                  Design Department
+                  {deptName}
                 </Typography>
               ) : (
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  Design Department
+                  {deptName}
                 </Typography>
               )}
               <Box sx={{ width: 1, height: 20, bgcolor: "divider" }} />
@@ -760,7 +760,7 @@ export default async function InstructorPage({ params }: Props) {
           {isOwnProfile && (
             <Button
               component={Link}
-              href={`/submit?userId=${userId}&departmentId=${departmentId}`}
+              href="/submit"
               variant="contained"
               startIcon={<EditNoteOutlinedIcon />}
               sx={{ flexShrink: 0 }}

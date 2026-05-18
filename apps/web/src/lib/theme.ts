@@ -178,4 +178,21 @@ export const theme = createTheme({
       },
     },
   },
+
+  // Custom tokens used by shared UI components
+  custom: {
+    tertiary: {
+      main: "#7C3AED",
+      light: "#A78BFA",
+      dark: "#5B21B6",
+    },
+    surface: {
+      main: "#FFFFFF",
+      variant: "#F8F9FC",
+    },
+    outline: {
+      main: "#E5E7EB",
+      light: "#F3F4F6",
+    },
+  },
 });

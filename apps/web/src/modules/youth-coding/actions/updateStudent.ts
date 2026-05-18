@@ -2,17 +2,14 @@
 
 import { prisma } from "@orgos/db";
 import type { ActionResult } from "@orgos/utils";
-import { getSessionUser } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/requireSession";
 import { studentRegistrationSchema } from "../schema";
 
 export async function updateStudent(
   studentId: string,
   formData: unknown,
 ): Promise<ActionResult<{ id: string }>> {
-  const sessionUser = await getSessionUser();
-  if (!sessionUser) {
-    return { success: false, error: "Not authenticated." };
-  }
+  const sessionUser = await requireSession();
 
   const parsed = studentRegistrationSchema.safeParse(formData);
   if (!parsed.success) {
