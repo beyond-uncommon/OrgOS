@@ -18,6 +18,8 @@ const ORG_WIDE = new Set([
   "COUNTRY_DIRECTOR", "ADMIN", "HEAD_OF_OPERATIONS", "M_AND_E",
   "SAFEGUARDING", "MARKETING_COMMS_MANAGER", "BUSINESS_DEVELOPMENT_MANAGER",
   "BUSINESS_DEVELOPMENT_ASSOCIATE", "HR_OFFICER", "FINANCE_ADMIN_OFFICER",
+  "HEAD_OF_DESIGN", "HEAD_OF_DEVELOPMENT",
+  "CAREER_DEVELOPMENT_OFFICER", "REGIONAL_HUB_LEAD",
 ]);
 
 const DEPARTMENT_ACCESS = new Set([
@@ -52,6 +54,7 @@ const ROUTE_GUARDS: RouteGuard[] = [
   { pattern: /^\/interventions$/, roles: new Set(["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "YOUTH_CODING_MANAGER", ...ORG_WIDE]) },
   { pattern: /^\/reports$/, roles: new Set(["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "COUNTRY_DIRECTOR", "YOUTH_CODING_MANAGER", ...ORG_WIDE]) },
   { pattern: /^\/coming-soon$/, roles: ALL_STAFF },
+  { pattern: /^\/roles\/[^/]+$/, roles: ALL_STAFF },
 ];
 
 function getRoleFromCookie(request: NextRequest): string | null {
