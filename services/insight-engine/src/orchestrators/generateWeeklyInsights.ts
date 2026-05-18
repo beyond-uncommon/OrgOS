@@ -1,4 +1,4 @@
-import { prisma } from "@orgos/db";
+import { prisma, SnapshotScope, PeriodType } from "@orgos/db";
 import { getWeekBounds, log, logError } from "@orgos/utils";
 import type { ActionResult } from "@orgos/utils";
 import type { InsightReport } from "@orgos/shared-types";
@@ -22,8 +22,8 @@ export async function generateWeeklyInsights(
     await prisma.dashboardSnapshot.create({
       data: {
         departmentId,
-        scope: "DEPARTMENT",
-        periodType: "WEEKLY",
+        scope: SnapshotScope.DEPARTMENT,
+        periodType: PeriodType.WEEKLY,
         periodStart: weekStart,
         data: report as object,
       },

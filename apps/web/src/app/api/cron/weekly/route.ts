@@ -18,8 +18,12 @@ export async function POST(request: Request) {
 
   const weekOf = new Date();
 
+  const { generateWeeklyInsights, generateForecast } = await import("@orgos/insight-engine");
+  const { generateWeeklyReport } = await import("@orgos/report-generator");
+
   for (const dept of departments) {
-    // Weekly insights first (structured analysis → dashboard snapshot)
+    const { weekStart, weekEnd } = (await import("@orgos/utils")).getWeekBounds(weekOf);
+
     let insightReport: InsightReport | undefined;
     try {
       const { generateWeeklyInsights } = await import("@orgos/insight-engine");
@@ -34,7 +38,16 @@ export async function POST(request: Request) {
       errors.push(`[${dept.name}] WeeklyInsights failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    // Weekly report (LLM-generated narrative, enriched with insights if available)
+    if (insightReport) {
+      try {
+        const { generateForecast } = await import("@orgos/insight-engine");
+        await generateForecast({ report: insightReport, anomalyHistory: [] });
+        results.push(`[${dept.name}] Forecast created`);
+      } catch (err) {
+        errors.push(`[${dept.name}] Forecast failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
     try {
       const { generateWeeklyReport } = await import("@orgos/report-generator");
       const reportResult = await generateWeeklyReport(dept.id, weekOf, insightReport);

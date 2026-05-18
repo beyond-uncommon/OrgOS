@@ -1,4 +1,4 @@
-import { prisma } from "@orgos/db";
+import { prisma, PendingActionStatus } from "@orgos/db";
 import type { ActionPlan } from "@orgos/shared-types";
 
 /**
@@ -32,7 +32,7 @@ export async function approveAction(
 ): Promise<void> {
   await prisma.pendingAction.update({
     where: { id: pendingActionId },
-    data: { status: "APPROVED", approvedById: approvedById || null },
+    data: { status: PendingActionStatus.APPROVED, approvedById: approvedById || null },
   });
 }
 
@@ -42,7 +42,7 @@ export async function rejectAction(
 ): Promise<void> {
   await prisma.pendingAction.update({
     where: { id: pendingActionId },
-    data: { status: "REJECTED", rejectedById: rejectedById || null },
+    data: { status: PendingActionStatus.REJECTED, rejectedById: rejectedById || null },
   });
 }
 
@@ -50,7 +50,7 @@ export async function rejectAction(
 export async function expireStaleActions(): Promise<number> {
   const result = await prisma.pendingAction.updateMany({
     where: { status: "PENDING", expiresAt: { lt: new Date() } },
-    data:  { status: "EXPIRED" },
+    data:  { status: PendingActionStatus.EXPIRED },
   });
   return result.count;
 }
@@ -58,7 +58,7 @@ export async function expireStaleActions(): Promise<number> {
 export async function getPendingActions(departmentId?: string) {
   return prisma.pendingAction.findMany({
     where: {
-      status: "PENDING",
+status: PendingActionStatus.PENDING,
       expiresAt: { gt: new Date() },
       ...(departmentId ? { departmentId } : {}),
     },

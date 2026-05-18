@@ -5,7 +5,7 @@ import { env } from "@orgos/utils";
 import type { InsightPattern, InsightCorrelation, RiskSignal } from "@orgos/shared-types";
 
 const MODEL = "llama-3.3-70b-versatile";
-const PROMPT_FILE = "weekly-insights-v1.md";
+const PROMPT_FILE = "insight-generation-v1.md";
 export const PROMPT_VERSION = PROMPT_FILE.replace(".md", "");
 
 interface WeeklyNarrativeInput {
@@ -18,7 +18,7 @@ interface WeeklyNarrativeInput {
 
 export async function generateWeeklyNarrative(input: WeeklyNarrativeInput): Promise<string> {
   const systemPrompt = readFileSync(
-    join(process.cwd(), "src/prompts", PROMPT_FILE),
+    join(process.cwd(), "docs/prompts", PROMPT_FILE),
     "utf-8"
   );
 

@@ -5,7 +5,7 @@ import { env } from "@orgos/utils";
 import type { ForwardRiskSignal, OpportunitySignal, RiskEscalationForecast } from "@orgos/shared-types";
 
 const MODEL = "llama-3.3-70b-versatile";
-const PROMPT_FILE = "forecast-v1.md";
+const PROMPT_FILE = "risk-prediction-v1.md";
 export const PROMPT_VERSION = PROMPT_FILE.replace(".md", "");
 
 interface ForwardNarrativeInput {
@@ -22,7 +22,7 @@ interface ForwardNarrativeInput {
  */
 export async function generateForwardNarrative(input: ForwardNarrativeInput): Promise<string> {
   const systemPrompt = readFileSync(
-    join(process.cwd(), "src/v2/prompts", PROMPT_FILE),
+    join(process.cwd(), "docs/prompts", PROMPT_FILE),
     "utf-8"
   );
 

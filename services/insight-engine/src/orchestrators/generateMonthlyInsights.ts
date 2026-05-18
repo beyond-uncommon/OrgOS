@@ -1,4 +1,4 @@
-import { prisma } from "@orgos/db";
+import { prisma, SnapshotScope, PeriodType } from "@orgos/db";
 import { getMonthBounds, log, logError } from "@orgos/utils";
 import type { ActionResult } from "@orgos/utils";
 import type { InsightReport } from "@orgos/shared-types";
@@ -23,8 +23,8 @@ export async function generateMonthlyInsights(
     await prisma.dashboardSnapshot.create({
       data: {
         departmentId,
-        scope: "DEPARTMENT",
-        periodType: "MONTHLY",
+        scope: SnapshotScope.DEPARTMENT,
+        periodType: PeriodType.MONTHLY,
         periodStart: start,
         data: report as object,
       },

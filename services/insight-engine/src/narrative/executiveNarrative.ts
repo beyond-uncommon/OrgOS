@@ -5,7 +5,7 @@ import { env } from "@orgos/utils";
 import type { RiskSignal } from "@orgos/shared-types";
 
 const MODEL = "llama-3.3-70b-versatile";
-const PROMPT_FILE = "executive-snapshot-v1.md";
+const PROMPT_FILE = "insight-generation-v1.md";
 export const PROMPT_VERSION = PROMPT_FILE.replace(".md", "");
 
 interface ExecutiveNarrativeInput {
@@ -20,7 +20,7 @@ interface ExecutiveNarrativeInput {
 
 export async function generateExecutiveNarrative(input: ExecutiveNarrativeInput): Promise<string> {
   const systemPrompt = readFileSync(
-    join(process.cwd(), "src/prompts", PROMPT_FILE),
+    join(process.cwd(), "docs/prompts", PROMPT_FILE),
     "utf-8"
   );
 

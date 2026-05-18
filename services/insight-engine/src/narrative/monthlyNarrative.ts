@@ -6,7 +6,7 @@ import type { InsightPattern, InsightCorrelation, RiskSignal } from "@orgos/shar
 import type { MetricTrendSummary } from "../aggregators/metricTrendAggregator.js";
 
 const MODEL = "llama-3.3-70b-versatile";
-const PROMPT_FILE = "monthly-insights-v1.md";
+const PROMPT_FILE = "insight-generation-v1.md";
 export const PROMPT_VERSION = PROMPT_FILE.replace(".md", "");
 
 interface MonthlyNarrativeInput {
@@ -20,7 +20,7 @@ interface MonthlyNarrativeInput {
 
 export async function generateMonthlyNarrative(input: MonthlyNarrativeInput): Promise<string> {
   const systemPrompt = readFileSync(
-    join(process.cwd(), "src/prompts", PROMPT_FILE),
+    join(process.cwd(), "docs/prompts", PROMPT_FILE),
     "utf-8"
   );
 

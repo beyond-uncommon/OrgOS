@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { prisma } from "@orgos/db";
+import { prisma, SnapshotScope, PeriodType } from "@orgos/db";
 import { log, logError } from "@orgos/utils";
 import type { ActionResult } from "@orgos/utils";
 import type { InsightReport, InsightContext } from "@orgos/shared-types";
@@ -28,8 +28,8 @@ export async function generateExecutiveSnapshot(
 
     await prisma.dashboardSnapshot.create({
       data: {
-        scope: "ORGANIZATION",
-        periodType: "WEEKLY",
+        scope: SnapshotScope.ORGANIZATION,
+        periodType: PeriodType.MONTHLY,
         periodStart: from,
         data: report as object,
       },
