@@ -1,0 +1,59 @@
+name: Cron Pipeline
+
+on:
+  schedule:
+    # Every day at 6 PM UTC — runs end-of-day anomaly checks, metric extraction, weekly/monthly reports, snapshots
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Job to run"
+        required: true
+        default: "daily"
+        type: choice
+        options:
+          - daily
+          - weekly
+          - monthly
+          - all
+
+env:
+  APP_URL: ${{ secrets.APP_URL }}
+  CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
+jobs:
+  daily:
+    name: Daily Pipeline
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.job == 'daily' || github.event.inputs.job == 'all'
+    steps:
+      - name: Trigger daily cron
+        run: |
+          curl -s -o /dev/w -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/daily"
+
+  weekly:
+    name: Weekly Pipeline
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.job == 'weekly' || github.event.inputs.job == 'all')
+    steps:
+      - name: Trigger weekly cron
+        run: |
+          curl -s -o /dev/w -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/weekly"
+
+  monthly:
+    name: Monthly Pipeline
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.job == 'monthly' || github.event.inputs.job == 'all')
+    steps:
+      - name: Trigger monthly cron
+        run: |
+          curl -s -o /dev/w -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/monthly"
