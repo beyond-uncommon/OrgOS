@@ -141,7 +141,7 @@ export function FundingClient({ records, programs, totalFunding, userName, userR
               {records.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                    No funding records yet. Click "Add Record" to create one.
+                    No funding records yet. Click &quot;Add Record&quot; to create one.
                   </TableCell>
                 </TableRow>
               ) : (
