@@ -104,6 +104,7 @@ export function DailyEntryForm({ departmentId, initialReportType = "DAILY", stud
   const [values, setValues] = React.useState<DailyEntryFormValues>(EMPTY(initialReportType));
   const [errors, setErrors] = React.useState<Partial<Record<keyof DailyEntryFormValues, string>>>({});
   const [status, setStatus] = React.useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [aiSummary, setAiSummary] = React.useState<string>("");
   const [serverError, setServerError] = React.useState<string | null>(null);
   const [showWeekSummary, setShowWeekSummary] = React.useState(false);
 
@@ -182,6 +183,7 @@ export function DailyEntryForm({ departmentId, initialReportType = "DAILY", stud
     const result = await submitDailyEntry(parsed.data);
     if (result.success) {
       setStatus("success");
+      setAiSummary(result.data.quickSummary ?? "");
       setValues(EMPTY(reportType));
     } else {
       setStatus("error");
@@ -218,6 +220,16 @@ export function DailyEntryForm({ departmentId, initialReportType = "DAILY", stud
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 3, maxWidth: 320, mx: "auto" }}>
           Your report has been submitted and is being analyzed. It will appear in your dashboard shortly.
         </Typography>
+        {aiSummary && (
+          <Box sx={{ maxWidth: 480, mx: "auto", mb: 3, p: 2, bgcolor: "grey.50", borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+            <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 600, letterSpacing: "0.08em", display: "block", mb: 0.5 }}>
+              AI Summary
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.primary" }}>
+              {aiSummary}
+            </Typography>
+          </Box>
+        )}
         <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
           <Button variant="outlined" onClick={() => setStatus("idle")} sx={{ borderColor: "divider", color: "text.secondary", "&:hover": { borderColor: "primary.main", color: "primary.main" } }}>
             Submit another
