@@ -27,5 +27,8 @@
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
+  },
+  "dependencies": {
+    "caniuse-lite": "^1.0.30001793"
   }
 }

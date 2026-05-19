@@ -7,6 +7,20 @@ import { getSessionUser } from "@/lib/auth/session";
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const MAX_SIZE = 5 * 1024 * 1024;
 
+async function uploadToBlob(name: string, file: File): Promise<string> {
+  const { put } = await import("@vercel/blob");
+  const { url } = await put(`student-reports/${name}`, file, { access: "public" });
+  return url;
+}
+
+async function uploadToDisk(name: string, file: File): Promise<string> {
+  const dir = path.join(process.cwd(), "public", "uploads", "student-reports");
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  await mkdir(dir, { recursive: true });
+  await writeFile(path.join(dir, name), bytes);
+  return `/uploads/student-reports/${name}`;
+}
+
 export async function POST(request: Request) {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -19,11 +33,10 @@ export async function POST(request: Request) {
 
   const ext = file.type.split("/")[1] ?? "jpg";
   const name = `${crypto.randomBytes(12).toString("hex")}.${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "student-reports");
-  const bytes = new Uint8Array(await file.arrayBuffer());
 
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, name), bytes);
+  const url = process.env.BLOB_READ_WRITE_TOKEN
+    ? await uploadToBlob(name, file)
+    : await uploadToDisk(name, file);
 
-  return NextResponse.json({ url: `/uploads/student-reports/${name}` });
+  return NextResponse.json({ url });
 }

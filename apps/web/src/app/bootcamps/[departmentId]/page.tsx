@@ -11,6 +11,8 @@ import { YCPanel } from "@/modules/youth-coding/components/YCPanel";
 import type { Alert } from "@orgos/db";
 import { requireAccess } from "@/lib/auth/requireAccess";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ departmentId: string }>;
 }

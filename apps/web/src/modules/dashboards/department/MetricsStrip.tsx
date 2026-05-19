@@ -1,3 +1,4 @@
+"use client";
 import * as React from "react";
 import Grid from "@mui/material/Grid2";
 import { Box, Button, Typography, Tooltip } from "@mui/material";
