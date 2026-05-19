@@ -20,13 +20,6 @@ export async function POST(request: Request) {
     const ext = file.type.split("/")[1] ?? "jpg";
     const name = `${crypto.randomBytes(12).toString("hex")}.${ext}`;
 
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      return NextResponse.json(
-        { error: "Blob storage not configured — set BLOB_READ_WRITE_TOKEN env var" },
-        { status: 500 },
-      );
-    }
-
     const { url } = await put(`student-reports/${name}`, file, { access: "public" });
     return NextResponse.json({ url });
   } catch (err) {
