@@ -1,42 +1,38 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import crypto from "crypto";
+import { put } from "@vercel/blob";
 import { getSessionUser } from "@/lib/auth/session";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const MAX_SIZE = 5 * 1024 * 1024;
 
-async function uploadToBlob(name: string, file: File): Promise<string> {
-  const { put } = await import("@vercel/blob");
-  const { url } = await put(`student-reports/${name}`, file, { access: "public" });
-  return url;
-}
-
-async function uploadToDisk(name: string, file: File): Promise<string> {
-  const dir = path.join(process.cwd(), "public", "uploads", "student-reports");
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, name), bytes);
-  return `/uploads/student-reports/${name}`;
-}
-
 export async function POST(request: Request) {
-  const sessionUser = await getSessionUser();
-  if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const formData = await request.formData();
-  const file = formData.get("file") as File | null;
-  if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
-  if (!ALLOWED_TYPES.has(file.type)) return NextResponse.json({ error: "Only JPEG, PNG, WebP, and GIF allowed" }, { status: 400 });
-  if (file.size > MAX_SIZE) return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+    if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    if (!ALLOWED_TYPES.has(file.type)) return NextResponse.json({ error: "Only JPEG, PNG, WebP, and GIF allowed" }, { status: 400 });
+    if (file.size > MAX_SIZE) return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
 
-  const ext = file.type.split("/")[1] ?? "jpg";
-  const name = `${crypto.randomBytes(12).toString("hex")}.${ext}`;
+    const ext = file.type.split("/")[1] ?? "jpg";
+    const name = `${crypto.randomBytes(12).toString("hex")}.${ext}`;
 
-  const url = process.env.BLOB_READ_WRITE_TOKEN
-    ? await uploadToBlob(name, file)
-    : await uploadToDisk(name, file);
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json(
+        { error: "Blob storage not configured — set BLOB_READ_WRITE_TOKEN env var" },
+        { status: 500 },
+      );
+    }
 
-  return NextResponse.json({ url });
+    const { url } = await put(`student-reports/${name}`, file, { access: "public" });
+    return NextResponse.json({ url });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Upload failed" },
+      { status: 500 },
+    );
+  }
 }
