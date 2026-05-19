@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@orgos/db";
 import { PortalClient } from "./PortalClient";
 
