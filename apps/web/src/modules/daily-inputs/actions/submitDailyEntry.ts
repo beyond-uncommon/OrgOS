@@ -7,6 +7,7 @@ import type { DailyEntry } from "@orgos/shared-types";
 import { dailyEntryFormSchema } from "../schema";
 import { requireSession } from "@/lib/auth/requireSession";
 import { runSubmissionPipeline } from "@/lib/pipeline/submissionPipeline";
+import { generateQuickSummary } from "@/lib/ai/generateQuickSummary";
 
 export async function submitDailyEntry(
   formData: unknown,
@@ -21,8 +22,16 @@ export async function submitDailyEntry(
     return { success: false, error: parsed.error.message };
   }
 
+  const quickSummary = await generateQuickSummary({
+    attendanceStatus: parsed.data.attendanceStatus,
+    outputCompleted: parsed.data.outputCompleted,
+    blockers: parsed.data.blockers,
+    engagementNotes: parsed.data.engagementNotes,
+    reportType: parsed.data.reportType,
+  });
+
   const { ingestDailyEntry } = await import("@orgos/ingestion-engine");
-  const result = await ingestDailyEntry({ userId, departmentId, ...parsed.data });
+  const result = await ingestDailyEntry({ userId, departmentId, ...parsed.data, quickSummary });
   if (!result.success) return result;
 
   const entry = result.data;

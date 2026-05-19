@@ -120,7 +120,6 @@ export function DailyEntryForm({ departmentId, initialReportType = "DAILY", stud
       outputCompleted: previousEntry.outputCompleted,
       engagementNotes: previousEntry.engagementNotes,
       blockers: previousEntry.blockers,
-      quickSummary: previousEntry.quickSummary,
     }));
   }
 
@@ -133,7 +132,6 @@ export function DailyEntryForm({ departmentId, initialReportType = "DAILY", stud
       outputCompleted: previousEntry.outputCompleted,
       engagementNotes: previousEntry.engagementNotes,
       blockers: previousEntry.blockers,
-      quickSummary: previousEntry.quickSummary,
       reportType: "DAILY" as ReportType,
     });
     if (result.success) {
@@ -571,10 +569,6 @@ export function DailyEntryForm({ departmentId, initialReportType = "DAILY", stud
                 )}
               </Box>
 
-              <Box>
-                <FieldLabel required>Quick Summary</FieldLabel>
-                <TextField placeholder="1–2 sentence summary of today" value={values.quickSummary} onChange={handleText("quickSummary")} error={!!errors.quickSummary} helperText={errors.quickSummary} fullWidth multiline minRows={2} size="small" />
-              </Box>
             </Stack>
           </Box>
         )}
@@ -684,10 +678,6 @@ export function DailyEntryForm({ departmentId, initialReportType = "DAILY", stud
                 <FieldLabel>Follow-up Required</FieldLabel>
                 <TextField placeholder="What follow-up is needed? Leave blank if resolved." value={values.engagementNotes} onChange={handleText("engagementNotes")} fullWidth multiline minRows={2} size="small" />
               </Box>
-              <Box>
-                <FieldLabel required>Incident Summary</FieldLabel>
-                <TextField placeholder="1–2 sentence summary for the record" value={values.quickSummary} onChange={handleText("quickSummary")} error={!!errors.quickSummary} helperText={errors.quickSummary} fullWidth multiline minRows={2} size="small" />
-              </Box>
             </Stack>
           </Box>
         )}
@@ -753,10 +743,6 @@ export function DailyEntryForm({ departmentId, initialReportType = "DAILY", stud
                 <Box>
                   <FieldLabel>Blockers or Issues</FieldLabel>
                   <TextField placeholder="Any logistical problems, no-shows, or issues during the session?" value={values.blockers} onChange={handleText("blockers")} fullWidth multiline minRows={2} size="small" />
-                </Box>
-                <Box>
-                  <FieldLabel required>Session Summary</FieldLabel>
-                  <TextField placeholder="1–2 sentence summary for the record" value={values.quickSummary} onChange={handleText("quickSummary")} error={!!errors.quickSummary} helperText={errors.quickSummary} fullWidth multiline minRows={2} size="small" />
                 </Box>
               </Stack>
             </Box>

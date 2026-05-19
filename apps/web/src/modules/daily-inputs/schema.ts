@@ -29,7 +29,7 @@ export const dailyEntryFormSchema = z.object({
   outputCompleted: z.string().min(1, "Required").max(2000),
   blockers: z.string().max(2000).default(""),
   engagementNotes: z.string().max(2000).default(""),
-  quickSummary: z.string().min(1, "Required").max(1000),
+  quickSummary: z.string().max(1000).default(""),
   // Hub metrics
   totalStudents: z.coerce.number().int().min(0).optional(),
   studentsPresent: z.coerce.number().int().min(0).optional(),

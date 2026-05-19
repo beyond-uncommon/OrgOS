@@ -8,7 +8,7 @@ export const dailyEntrySchema = z.object({
   outputCompleted: z.string().min(1).max(2000),
   blockers: z.string().max(2000).default(""),
   engagementNotes: z.string().max(2000).default(""),
-  quickSummary: z.string().min(1).max(1000),
+  quickSummary: z.string().max(1000).default(""),
   totalStudents: z.coerce.number().int().min(0).optional(),
   studentsPresent: z.coerce.number().int().min(0).optional(),
   dropouts: z.coerce.number().int().min(0).optional(),
