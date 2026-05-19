@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Box, Button, CircularProgress, TextField, Typography } from "@mui/material";
 import { useFormState, useFormStatus } from "react-dom";
 import { login } from "@/lib/auth/actions";
@@ -23,6 +24,13 @@ function SubmitButton() {
 
 export function LoginForm() {
   const [state, action] = useFormState(login, null);
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (state && "redirect" in state) {
+      router.push(state.redirect);
+    }
+  }, [state, router]);
 
   return (
     <Box component="form" action={action} noValidate>
@@ -68,7 +76,7 @@ export function LoginForm() {
           />
         </Box>
 
-        {state?.error && (
+        {state && "error" in state && (
           <Typography variant="body2" sx={{ color: "error.main" }}>
             {state.error}
           </Typography>

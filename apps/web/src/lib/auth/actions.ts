@@ -7,7 +7,39 @@ import { getSessionCookieName } from "./session";
 import { redirectByRole } from "./redirect-by-role";
 import { getDemoPasswords } from "./demo-passwords";
 
-async function setSessionAndRedirect(userId: string, role: string, departmentId: string | null) {
+function getRouteForRole(role: string, departmentId: string | null, userId: string): string {
+  const ROLE_ROUTE: Record<string, string> = {
+    HEAD_OF_OPERATIONS: "/roles/head-of-operations",
+    HEAD_OF_DESIGN: "/roles/head-of-design",
+    HEAD_OF_DEVELOPMENT: "/roles/head-of-development",
+    SAFEGUARDING: "/roles/safeguarding",
+    M_AND_E: "/roles/me",
+    MARKETING_COMMS_MANAGER: "/roles/marketing",
+    BUSINESS_DEVELOPMENT_MANAGER: "/roles/business-dev",
+    BUSINESS_DEVELOPMENT_ASSOCIATE: "/roles/business-dev-associate",
+    CAREER_DEVELOPMENT_OFFICER: "/roles/career-dev",
+    REGIONAL_HUB_LEAD: "/roles/regional-hub",
+    HR_OFFICER: "/roles/hr",
+    FINANCE_ADMIN_OFFICER: "/roles/finance",
+  };
+  const route = ROLE_ROUTE[role];
+  if (route) return route;
+  switch (role) {
+    case "INSTRUCTOR": return `/departments/${departmentId}/instructors/${userId}`;
+    case "HUB_LEAD": return `/departments/${departmentId}`;
+    case "BOOTCAMP_MANAGER": return `/bootcamps/${departmentId}`;
+    case "YOUTH_CODING_MANAGER": return `/youth-coding`;
+    case "TEACHER_TRAINING_COORDINATOR": return `/programs/${departmentId}`;
+    case "PROGRAM_MANAGER": return `/programs`;
+    case "COUNTRY_DIRECTOR":
+    case "ADMIN": return "/org";
+    case "PARTNER": return "/portal";
+    case "STUDENT": return "/student";
+    default: return "/coming-soon";
+  }
+}
+
+async function setCookie(userId: string, role: string) {
   const jar = await cookies();
   jar.set(getSessionCookieName(), `${role}:${userId}`, {
     httpOnly: true,
@@ -15,14 +47,14 @@ async function setSessionAndRedirect(userId: string, role: string, departmentId:
     path: "/",
     maxAge: 60 * 60 * 24,
   });
-
-  redirectByRole(role, departmentId, userId);
 }
 
+type LoginResult = { error: string; redirect?: never } | { error?: never; redirect: string } | null;
+
 export async function login(
-  _prevState: { error: string } | null,
+  _prevState: LoginResult,
   formData: FormData,
-): Promise<{ error: string } | null> {
+): Promise<LoginResult> {
   const email = (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
   const password = (formData.get("password") as string | null) ?? "";
 
@@ -41,8 +73,9 @@ export async function login(
   });
   if (!user) return { error: "Account not found." };
 
-  await setSessionAndRedirect(user.id, user.role, user.departmentId);
-  return null;
+  await setCookie(user.id, user.role);
+  const route = getRouteForRole(user.role, user.departmentId, user.id);
+  return { redirect: route };
 }
 
 export async function loginAs(userId: string) {
@@ -51,7 +84,8 @@ export async function loginAs(userId: string) {
     select: { id: true, role: true, departmentId: true },
   });
   if (!user) return;
-  await setSessionAndRedirect(user.id, user.role, user.departmentId);
+  await setCookie(user.id, user.role);
+  redirectByRole(user.role, user.departmentId, user.id);
 }
 
 export async function logout() {
@@ -72,13 +106,6 @@ export async function switchUser(email: string) {
   });
   if (!user) return;
 
-  const jar = await cookies();
-  jar.set(getSessionCookieName(), `${user.role}:${user.id}`, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24,
-  });
-
+  await setCookie(user.id, user.role);
   redirect("/");
 }
