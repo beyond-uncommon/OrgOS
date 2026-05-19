@@ -24,7 +24,11 @@ export default async function ImpactStoryPage({ params }: Props) {
   const [reports, sessions, entries, students, hubs] = await Promise.all([
     prisma.studentReport.findMany({
       where: { date: { gte: start, lte: end } },
-      include: { student: { select: { name: true, department: { select: { name: true } } } } },
+      select: {
+        id: true, learned: true, enjoyed: true, struggled: true,
+        rating: true, date: true,
+        student: { select: { name: true, department: { select: { name: true } } } },
+      },
       orderBy: { date: "asc" },
     }),
     prisma.youthCodingSession.findMany({

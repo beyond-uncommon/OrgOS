@@ -81,7 +81,11 @@ async function getStudentQuotes() {
     where: { rating: { gte: 4 } },
     orderBy: { createdAt: "desc" },
     take: 8,
-    include: { student: true },
+    select: {
+      enjoyed: true,
+      rating: true,
+      student: { select: { name: true } },
+    },
   });
   return quotes.map(q => ({
     quote: q.enjoyed,
