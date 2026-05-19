@@ -1,6 +1,14 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    const key = process.env.RESEND_API_KEY;
+    if (!key) throw new Error("RESEND_API_KEY not configured");
+    _resend = new Resend(key);
+  }
+  return _resend;
+}
 
 const FROM = process.env.EMAIL_FROM ?? "OrgOS <no-reply@uncommon.org>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -16,7 +24,7 @@ async function send(opts: { to: string; subject: string; html: string }): Promis
     return { success: false, error: "RESEND_API_KEY not configured" };
   }
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: FROM,
       to: opts.to,
       subject: opts.subject,

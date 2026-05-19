@@ -1,6 +1,15 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY ?? "re_placeholder");
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    const key = process.env.RESEND_API_KEY;
+    if (!key) throw new Error("RESEND_API_KEY not configured");
+    _resend = new Resend(key);
+  }
+  return _resend;
+}
+
 const FROM = process.env.EMAIL_FROM ?? "OrgOS <no-reply@uncommon.org>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -43,7 +52,7 @@ export async function sendAlertNotification(
   const bodyContent = `<div style="padding:32px;"><h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#111827;">${severity} Alert — ${alertType.replace(/_/g, " ")}</h1><p style="margin:0 0 20px;font-size:14px;color:#6B7280;">Hi ${recipientName},</p><div style="background:#FEF2F2;border:1px solid #DC2626;border-radius:8px;padding:16px 20px;margin-bottom:20px;"><p style="margin:0;font-size:14px;color:#374151;"><strong>Hub:</strong> ${hubName}<br/><strong>Severity:</strong> ${severity}<br/><strong>Description:</strong> ${description}</p></div></div>`;
 
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: FROM,
       to: recipientEmail,
       subject: `[OrgOS ${severity}] ${alertType.replace(/_/g, " ")} — ${hubName}`,
@@ -75,7 +84,7 @@ export async function sendInterventionAssigned(
   const bodyContent = `<div style="padding:32px;"><h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#111827;">Intervention Assigned</h1><p style="margin:0 0 20px;font-size:14px;color:#6B7280;">Hi ${recipientName},</p><div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:16px 20px;margin-bottom:20px;"><p style="margin:0;font-size:14px;color:#374151;"><strong>Hub:</strong> ${hubName}<br/><strong>Issue:</strong> ${issueType.replace(/_/g, " ")}<br/><strong>Severity:</strong> ${severity}</p></div><p style="margin:0;font-size:14px;color:#6B7280;">An intervention has been assigned to you. Please review and take appropriate action.</p></div>`;
 
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: FROM,
       to: recipientEmail,
       subject: `[OrgOS] Intervention Assigned — ${hubName}`,
