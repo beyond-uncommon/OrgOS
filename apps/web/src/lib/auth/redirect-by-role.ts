@@ -39,6 +39,8 @@ export function redirectByRole(
     case "COUNTRY_DIRECTOR":
     case "ADMIN":
       redirect("/org");
+    case "PARTNER":
+      redirect("/portal");
     case "STUDENT":
       redirect("/student");
     default:

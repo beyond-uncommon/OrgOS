@@ -202,6 +202,73 @@ export async function sendBulkSubmissionReminder(
   return { sent, failed, errors };
 }
 
+export async function sendAlertNotification(
+  recipientEmail: string,
+  recipientName: string,
+  alertType: string,
+  severity: string,
+  description: string,
+  hubName: string,
+): Promise<EmailResult> {
+  const severityColor = severity === "CRITICAL" ? "#DC2626" : severity === "HIGH" ? "#EA580C" : "#F59E0B";
+  const bodyContent = `
+    <div style="${bodyStyle}">
+      <h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#111827;">
+        ${severity} Alert — ${alertType.replace(/_/g, " ")}
+      </h1>
+      <p style="margin:0 0 20px;font-size:14px;color:#6B7280;">
+        Hi ${recipientName},
+      </p>
+      <div style="background:#FEF2F2;border:1px solid ${severityColor};border-radius:8px;padding:16px 20px;margin-bottom:20px;">
+        <p style="margin:0;font-size:14px;color:#374151;">
+          <strong>Hub:</strong> ${hubName}<br/>
+          <strong>Severity:</strong> ${severity}<br/>
+          <strong>Description:</strong> ${description}
+        </p>
+      </div>
+    </div>`;
+
+  return send({
+    to: recipientEmail,
+    subject: `[OrgOS ${severity}] ${alertType.replace(/_/g, " ")} — ${hubName}`,
+    html: wrapHtml("Alert Notification", severityColor, bodyContent, "View Alerts", `${APP_URL}/interventions`),
+  });
+}
+
+export async function sendReportApprovedNotification(
+  recipientEmail: string,
+  recipientName: string,
+  reportType: string,
+  departmentName: string,
+  period: string,
+): Promise<EmailResult> {
+  const bodyContent = `
+    <div style="${bodyStyle}">
+      <h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#111827;">
+        ${reportType} Report Approved
+      </h1>
+      <p style="margin:0 0 20px;font-size:14px;color:#6B7280;">
+        Hi ${recipientName},
+      </p>
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
+        <p style="margin:0;font-size:14px;color:#374151;">
+          <strong>Department:</strong> ${departmentName}<br/>
+          <strong>Period:</strong> ${period}<br/>
+          <strong>Status:</strong> Approved
+        </p>
+      </div>
+      <p style="margin:0;font-size:14px;color:#6B7280;">
+        The ${reportType.toLowerCase()} report has been reviewed and approved. Data will be rolled up into the next organizational report.
+      </p>
+    </div>`;
+
+  return send({
+    to: recipientEmail,
+    subject: `[OrgOS] ${reportType} Report Approved — ${departmentName}`,
+    html: wrapHtml("Report Approved", "#16A34A", bodyContent, "View Report", `${APP_URL}/reports`),
+  });
+}
+
 export async function sendBulkMissedDeadline(
   emails: Array<{ name: string; email: string; departmentName: string; submissionCount: number; missedDays: number }>
 ): Promise<{ sent: number; failed: number; errors: string[] }> {

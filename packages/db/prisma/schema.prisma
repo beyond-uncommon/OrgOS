@@ -10,28 +10,34 @@ datasource db {
 }
 
 model Student {
-  id                String              @id @default(cuid())
-  name              String
-  departmentId      String
-  instructorId      String
-  enrollmentStatus  String              @default("ACTIVE")
+  id                   String              @id @default(cuid())
+  name                 String
+  departmentId         String
+  instructorId         String
+  enrollmentStatus     String              @default("ACTIVE")
+  globalStudentId      String?             @unique
+  linkedPrograms      String[]
+  firstEnrollmentDate DateTime?
+  lastActivityDate     DateTime?
+  statusHistory        Json?
   // Demographic fields — populated for youth coding students (created via STUDENT role).
   // Nullable for backward compatibility with pre-existing bootcamp Student rows.
-  age               Int?
-  gender            String?
-  school            String?
-  grade             String?
-  community         String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  department        Department          @relation(fields: [departmentId], references: [id])
-  instructor        User                @relation("InstructorStudents", fields: [instructorId], references: [id])
-  sessionAttendance SessionAttendance[]
-  reports           StudentReport[]
-  attendanceRecords AttendanceRecord[]
+  age                  Int?
+  gender               String?
+  school               String?
+  grade                String?
+  community            String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  department           Department          @relation(fields: [departmentId], references: [id])
+  instructor           User                @relation("InstructorStudents", fields: [instructorId], references: [id])
+  sessionAttendance    SessionAttendance[]
+  reports              StudentReport[]
+  attendanceRecords    AttendanceRecord[]
 
   @@index([instructorId])
   @@index([departmentId])
+  @@index([globalStudentId])
 }
 
 model Department {
@@ -52,9 +58,13 @@ model Department {
   students            Student[]
   users               User[]
   weeklyReports       WeeklyReport[]
+  weeklyBriefs       WeeklyBrief[]
   youthCodingSessions YouthCodingSession[]
   attendanceSessions  AttendanceSession[]
   fundingRecords      FundingRecord[]
+  stories             Story[]
+  photos              Photo[]
+  announcements       Announcement[]
 
   @@index([parentDepartmentId])
 }
@@ -82,6 +92,7 @@ model User {
   reviewedWeeklyReports  WeeklyReport[]       @relation("WeeklyReportReviewer")
   reviewedDailyReports    DailyReport[]        @relation("DailyReportReviewer")
   submittedSessions      YouthCodingSession[] @relation("SessionSubmitter")
+  authoredAnnouncements Announcement[]        @relation("AnnouncementAuthor")
 
   @@index([departmentId])
   @@index([role])
@@ -502,6 +513,7 @@ enum Role {
   HEAD_OF_OPERATIONS
   ADMIN
   STUDENT
+  PARTNER
 }
 
 enum EntryStatus {
@@ -588,4 +600,93 @@ enum AutomationLevel {
 enum ProjectStatus {
   COMPLETE
   NOT_COMPLETE
+}
+
+model Announcement {
+  id          String       @id @default(cuid())
+  title       String
+  body        String
+  priority    AnnouncementPriority @default(NORMAL)
+  scope       AnnouncementScope    @default(HUB)
+  authorId    String
+  departmentId String?
+  tags        String[]
+  pinned      Boolean      @default(false)
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  author      User         @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  department  Department?  @relation(fields: [departmentId], references: [id])
+
+  @@index([scope])
+  @@index([pinned])
+  @@index([departmentId])
+}
+
+enum AnnouncementPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum AnnouncementScope {
+  HUB
+  PROGRAM
+  ORG
+}
+
+model Story {
+  id          String       @id @default(cuid())
+  title       String
+  excerpt     String
+  body        String
+  authorName  String
+  authorRole  String       @default("")
+  studentAge  Int?
+  studentProgram String?
+  heroImage   String?
+  tags        String[]
+  published   Boolean      @default(false)
+  featured    Boolean      @default(false)
+  viewCount   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  @@index([published])
+  @@index([featured])
+}
+
+model Photo {
+  id          String       @id @default(cuid())
+  url         String
+  caption     String       @default("")
+  credit      String       @default("")
+  eventName   String
+  eventDate   DateTime
+  program     String       @default("")
+  departmentId String?
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  tags        String[]
+  featured    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+
+  @@index([departmentId])
+  @@index([program])
+  @@index([featured])
+}
+
+model WeeklyBrief {
+  id          String     @id @default(cuid())
+  departmentId String
+  weekStart   DateTime   @db.Date
+  weekEnd     DateTime   @db.Date
+  content     String     @db.Text
+  generatedAt DateTime   @default(now())
+  department  Department @relation(fields: [departmentId], references: [id])
+
+  @@unique([departmentId, weekStart])
+  @@index([departmentId])
 }

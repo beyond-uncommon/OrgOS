@@ -68,6 +68,9 @@ importers:
       '@orgos/metric-extraction':
         specifier: workspace:*
         version: link:../../services/metric-extraction
+      '@orgos/notifications':
+        specifier: workspace:*
+        version: link:../../packages/notifications
       '@orgos/report-generator':
         specifier: workspace:*
         version: link:../../services/report-generator
@@ -80,6 +83,9 @@ importers:
       '@orgos/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      groq-sdk:
+        specifier: ^0.9.1
+        version: 0.9.1
       next:
         specifier: ^14.2.4
         version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -133,6 +139,15 @@ importers:
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
+
+  packages/notifications:
+    dependencies:
+      '@orgos/db':
+        specifier: workspace:*
+        version: link:../db
+      resend:
+        specifier: ^4.0.1
+        version: 4.8.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
   packages/shared-types:
     dependencies:
@@ -199,6 +214,9 @@ importers:
       '@orgos/intervention-engine':
         specifier: workspace:*
         version: link:../intervention-engine
+      '@orgos/notifications':
+        specifier: workspace:*
+        version: link:../../packages/notifications
       '@orgos/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types

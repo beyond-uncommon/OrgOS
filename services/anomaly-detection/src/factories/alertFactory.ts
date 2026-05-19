@@ -5,6 +5,24 @@ import type { AnomalyMetadata } from "@orgos/shared-types";
 import { createAlert } from "@orgos/intervention-engine";
 import { resolveSeverity } from "../config/severityRules.js";
 
+async function notifySlack(alertId: string, departmentId: string, alertType: string, severity: string, description: string) {
+  try {
+    const { sendSlackAlert } = await import("@orgos/notifications/slack");
+    const dept = await prisma.department.findUnique({ where: { id: departmentId }, select: { name: true } });
+    if (!dept) return;
+    await sendSlackAlert({
+      hubName: dept.name,
+      alertType,
+      severity,
+      description,
+      departmentId,
+    });
+  } catch {
+    // non-blocking — don't fail alert creation for Slack errors
+    console.warn("[alertFactory] Slack notification failed for alert", alertId);
+  }
+}
+
 const RULE_VERSION = "anomaly-rules-v1";
 
 function buildAnomalyId(anomaly: AnomalyResult): string {
@@ -65,5 +83,38 @@ export async function createAlertsFromAnomalies(
       metadata,
       ...(autoAssignTo ? { autoAssignTo } : {}),
     });
+
+    if (severity === "CRITICAL" || severity === "HIGH") {
+      const entry = anomaly.entryId ? await prisma.dailyEntry.findUnique({ where: { id: anomaly.entryId }, select: { departmentId: true } }) : null;
+      if (entry?.departmentId) {
+        await notifySlack(
+          anomalyId,
+          entry.departmentId,
+          toAlertType(anomaly),
+          severity,
+          anomaly.description
+        );
+        try {
+          const { sendAlertNotification } = await import("@orgos/notifications/email");
+          const dept = await prisma.department.findUnique({ where: { id: entry.departmentId }, select: { name: true } });
+          const hubLead = await prisma.user.findFirst({
+            where: { departmentId: entry.departmentId, role: "HUB_LEAD" },
+            select: { email: true, name: true },
+          });
+          if (hubLead && dept) {
+            await sendAlertNotification(
+              hubLead.email,
+              hubLead.name,
+              toAlertType(anomaly),
+              severity,
+              anomaly.description,
+              dept.name,
+            );
+          }
+        } catch {
+          console.warn("[alertFactory] Email notification failed for anomaly", anomalyId);
+        }
+      }
+    }
   }
 }

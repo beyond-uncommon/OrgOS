@@ -1,5 +1,7 @@
 import { prisma } from "@orgos/db";
 import { ImpactClient } from "./ImpactClient";
+import { getPublishedStories, getFeaturedStories } from "@/modules/stories/queries";
+import { getPublicPhotos, getFeaturedPhotos } from "@/modules/gallery/queries";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
@@ -219,6 +221,41 @@ export default async function ImpactPage() {
   const teacherTraining = programs.find(p => p.name.toLowerCase().includes("teacher training"));
   const outreach = programs.find(p => p.name.toLowerCase().includes("outreach"));
 
+  const [stories, photos] = await Promise.all([
+    getPublishedStories(6),
+    getPublicPhotos(),
+  ]);
+
+  const storyData = stories.map(s => ({
+    id: s.id,
+    title: s.title,
+    excerpt: s.excerpt ?? "",
+    authorName: s.authorName,
+    authorRole: s.authorRole,
+    studentAge: s.studentAge ?? 0,
+    studentProgram: s.studentProgram ?? "",
+    heroImage: s.heroImage ?? "",
+    tags: s.tags,
+    featured: s.featured,
+    viewCount: s.viewCount,
+    createdAt: s.createdAt.toISOString(),
+    department: s.department ? { name: s.department.name } : null,
+  }));
+
+  const photoData = photos.map(p => ({
+    id: p.id,
+    url: p.url,
+    caption: p.caption,
+    credit: p.credit,
+    eventName: p.eventName,
+    eventDate: p.eventDate.toISOString(),
+    program: p.program,
+    tags: p.tags,
+    featured: p.featured,
+    createdAt: p.createdAt.toISOString(),
+    department: (p as unknown as { department: { name: string } | null }).department ? { name: (p as unknown as { department: { name: string } | null }).department!.name } : null,
+  }));
+
   return (
     <ImpactClient
       overview={overview}
@@ -228,6 +265,8 @@ export default async function ImpactPage() {
       teacherTrainingFunding={teacherTraining ? (programFunding[teacherTraining.id] ?? 0) : 0}
       outreachName={outreach?.name ?? "Outreach"}
       outreachFunding={outreach ? (programFunding[outreach.id] ?? 0) : 0}
+      stories={storyData}
+      photos={photoData}
     />
   );
 }

@@ -6,6 +6,7 @@ import type { ActionResult } from "@orgos/utils";
 import type { DailyEntry } from "@orgos/shared-types";
 import { dailyEntryFormSchema } from "../schema";
 import { requireSession } from "@/lib/auth/requireSession";
+import { runSubmissionPipeline } from "@/lib/pipeline/submissionPipeline";
 
 export async function submitDailyEntry(
   formData: unknown,
@@ -26,26 +27,7 @@ export async function submitDailyEntry(
 
   const entry = result.data;
 
-  // Fire-and-forget pipeline with retry. Safe in a persistent Node.js process.
-  // Dynamic imports prevent webpack from bundling service ESM packages at build time.
-  void (async () => {
-    const pipelineResult = await withRetry(async () => {
-      const { extractMetrics } = await import("@orgos/metric-extraction");
-      const extractionResult = await extractMetrics(entry);
-      if (!extractionResult.success) throw new Error(extractionResult.error);
-
-      const { refreshDepartmentSnapshot } = await import("@orgos/dashboard-engine");
-      await refreshDepartmentSnapshot(departmentId, entry.date);
-    }, { label: "daily_entry_pipeline", maxRetries: 3, baseDelayMs: 2000 });
-
-    if (!pipelineResult.success) {
-      logError("submit_daily_entry.pipeline_failed", new Error(pipelineResult.error), { entryId: entry.id });
-      await prisma.dailyEntry.update({
-        where: { id: entry.id },
-        data: { status: EntryStatus.FLAGGED },
-      }).catch(() => undefined);
-    }
-  })();
+  void runSubmissionPipeline(entry, departmentId);
 
   return { success: true, data: entry };
 }

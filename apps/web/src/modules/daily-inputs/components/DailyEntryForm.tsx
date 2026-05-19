@@ -28,10 +28,29 @@ interface Student {
   enrollmentStatus: string;
 }
 
+interface PreviousEntry {
+  attendanceStatus: string;
+  outputCompleted: string;
+  engagementNotes: string;
+  blockers: string;
+  quickSummary: string;
+  engagementScore?: string;
+  extractedMetrics?: Array<{ metricKey: string; metricValue: unknown }>;
+}
+
+interface WeekSummary {
+  entriesThisWeek: number;
+  daysExpected: number;
+  datesSubmitted: string[];
+  topMetrics: Array<{ key: string; count: number }>;
+}
+
 interface Props {
   departmentId: string;
   initialReportType?: ReportType;
   students?: Student[];
+  previousEntry?: PreviousEntry | null;
+  weekSummary?: WeekSummary | null;
 }
 
 const EMPTY = (reportType: ReportType): DailyEntryFormValues => ({
@@ -80,12 +99,50 @@ function SectionHeading({ children, color = "primary.main" }: { children: React.
   );
 }
 
-export function DailyEntryForm({ departmentId, initialReportType = "DAILY", students = [] }: Props) {
+export function DailyEntryForm({ departmentId, initialReportType = "DAILY", students = [], previousEntry, weekSummary }: Props) {
   const [reportType, setReportType] = React.useState<ReportType>(initialReportType);
   const [values, setValues] = React.useState<DailyEntryFormValues>(EMPTY(initialReportType));
   const [errors, setErrors] = React.useState<Partial<Record<keyof DailyEntryFormValues, string>>>({});
   const [status, setStatus] = React.useState<"idle" | "submitting" | "success" | "error">("idle");
   const [serverError, setServerError] = React.useState<string | null>(null);
+  const [showWeekSummary, setShowWeekSummary] = React.useState(false);
+
+  const hasPrevious = !!previousEntry && reportType === "DAILY";
+  const daysSubmitted = weekSummary?.datesSubmitted.length ?? 0;
+  const daysExpected = weekSummary?.daysExpected ?? 7;
+  const weekProgress = Math.round((daysSubmitted / daysExpected) * 100);
+
+  function applyPreviousDefaults() {
+    if (!previousEntry) return;
+    setValues(prev => ({
+      ...prev,
+      attendanceStatus: previousEntry.attendanceStatus,
+      outputCompleted: previousEntry.outputCompleted,
+      engagementNotes: previousEntry.engagementNotes,
+      blockers: previousEntry.blockers,
+      quickSummary: previousEntry.quickSummary,
+    }));
+  }
+
+  async function handleSameAsYesterday() {
+    setStatus("submitting");
+    if (!previousEntry) return;
+    const result = await submitDailyEntry({
+      date: new Date(),
+      attendanceStatus: previousEntry.attendanceStatus,
+      outputCompleted: previousEntry.outputCompleted,
+      engagementNotes: previousEntry.engagementNotes,
+      blockers: previousEntry.blockers,
+      quickSummary: previousEntry.quickSummary,
+      reportType: "DAILY" as ReportType,
+    });
+    if (result.success) {
+      setStatus("success");
+    } else {
+      setStatus("error");
+      setServerError(result.error ?? "Submission failed");
+    }
+  }
 
   function switchType(t: ReportType) {
     setReportType(t);
@@ -175,9 +232,92 @@ export function DailyEntryForm({ departmentId, initialReportType = "DAILY", stud
     );
   }
 
+  const submissionBar = reportType === "DAILY" && weekSummary ? (
+    <Box sx={{
+      border: "1px solid",
+      borderColor: weekProgress === 100 ? "rgb(var(--mui-palette-success-mainChannel) / 0.3)" : "rgb(var(--mui-palette-primary-mainChannel) / 0.2)",
+      borderRadius: 2,
+      bgcolor: weekProgress === 100
+        ? "rgb(var(--mui-palette-success-mainChannel) / 0.04)"
+        : "rgb(var(--mui-palette-primary-mainChannel) / 0.03)",
+      p: 2,
+      mb: 2,
+      cursor: weekSummary.topMetrics.length > 0 ? "pointer" : "default",
+      transition: "all 0.15s",
+    }} onClick={() => weekSummary.topMetrics.length > 0 && setShowWeekSummary(!showWeekSummary)}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+        <Typography variant="subtitle2" sx={{ color: "text.primary", fontSize: "0.75rem" }}>
+          Your Week — {daysSubmitted}/{daysExpected} days submitted
+        </Typography>
+        {weekProgress === 100 && (
+          <Chip label="Week complete ✓" size="small" color="success" sx={{ height: 18, fontSize: "0.6rem" }} />
+        )}
+      </Box>
+      <Box sx={{ height: 4, borderRadius: 2, bgcolor: "rgb(var(--mui-palette-grey-500Channel) / 0.1)", overflow: "hidden" }}>
+        <Box sx={{ height: "100%", width: `${weekProgress}%`, borderRadius: 2, bgcolor: weekProgress === 100 ? "success.main" : "primary.main", transition: "width 0.3s" }} />
+      </Box>
+      {weekSummary.topMetrics.length > 0 && (
+        <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.75, display: "block", fontSize: "0.65rem" }}>
+          {showWeekSummary ? "▲" : "▼"} {weekSummary.topMetrics.map(m => `${m.key}: ${m.count}`).join(" · ")}
+        </Typography>
+      )}
+    </Box>
+  ) : null;
+
+  const quickActions = hasPrevious && reportType === "DAILY" ? (
+    <Box sx={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      border: "1px solid",
+      borderColor: "rgb(var(--mui-palette-primary-mainChannel) / 0.2)",
+      borderRadius: 2,
+      bgcolor: "rgb(var(--mui-palette-primary-mainChannel) / 0.03)",
+      px: 2.5,
+      py: 1.5,
+      mb: 2,
+    }}>
+      <Box>
+        <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+          Similar to yesterday&apos;s entry
+        </Typography>
+        <Typography variant="body2" sx={{ color: "text.primary", fontSize: "0.8rem" }}>
+          {previousEntry.attendanceStatus.slice(0, 60)}{previousEntry.attendanceStatus.length > 60 ? "…" : ""}
+        </Typography>
+      </Box>
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={applyPreviousDefaults}
+          sx={{ fontSize: "0.7rem", py: 0.5, borderColor: "divider", color: "text.secondary", "&:hover": { borderColor: "primary.main", color: "primary.main" } }}
+        >
+          Edit
+        </Button>
+        <Button
+          size="small"
+          variant="contained"
+          color="primary"
+          onClick={handleSameAsYesterday}
+          disabled={status === "submitting"}
+          startIcon={status === "submitting" ? <CircularProgress size={12} color="inherit" /> : null}
+          sx={{ fontSize: "0.7rem", py: 0.5 }}
+        >
+          Submit
+        </Button>
+      </Box>
+    </Box>
+  ) : null;
+
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
       <Stack spacing={3}>
+        {/* ── Week progress bar ── */}
+        {submissionBar}
+
+        {/* ── One-tap quick submit ── */}
+        {quickActions}
+
         {/* ── Report type selector ── */}
         <Box>
           <FieldLabel required>Report Type</FieldLabel>

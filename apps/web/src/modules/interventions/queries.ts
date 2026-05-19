@@ -1,11 +1,11 @@
 import { prisma, InterventionStatus } from "@orgos/db";
 
-export async function getOpenInterventions(departmentId?: string) {
+export async function getOpenInterventions(departmentIds?: string[]) {
   return prisma.intervention.findMany({
     where: {
       status: { not: InterventionStatus.RESOLVED },
-      ...(departmentId
-        ? { assignedTo: { departmentId } }
+      ...(departmentIds
+        ? { assignedTo: { departmentId: { in: departmentIds } } }
         : {}),
     },
     include: { alert: true, assignedTo: { select: { id: true, name: true } } },

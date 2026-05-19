@@ -3,6 +3,7 @@ import { verifyCronRequest } from "@/lib/cron/auth";
 import { prisma } from "@orgos/db";
 import { toDateOnly } from "@orgos/utils";
 import { sendBulkSubmissionReminder } from "@/lib/email/service";
+import { sendSlackSubmissionReminder } from "@/lib/notifications/slack";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,14 @@ export async function POST(request: Request) {
     for (const inst of instructors) {
       if (!submittedIds.has(inst.id)) {
         reminders.push({ name: inst.name, email: inst.email, departmentName: dept.name });
+
+        if (process.env.SLACK_WEBHOOK_URL) {
+          void sendSlackSubmissionReminder({
+            instructorName: inst.name,
+            hubName: dept.name,
+            departmentId: dept.id,
+          });
+        }
       }
     }
   }
@@ -52,8 +61,8 @@ export async function POST(request: Request) {
     ok: true,
     results: [
       `submission_reminder:sent ${result.sent} email(s)`,
-      `submission_reminder:failed ${result.failed}`,
       `submission_reminder:pending ${reminders.length}`,
+      process.env.SLACK_WEBHOOK_URL ? "submission_reminder:slack_notified" : "submission_reminder:slack_skipped (not configured)",
       ...(result.errors.length ? result.errors.map((e, i) => `submission_reminder:error:${i} ${e}`) : []),
     ],
   });

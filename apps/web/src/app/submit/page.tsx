@@ -2,6 +2,7 @@ import { Box, Container, Typography } from "@mui/material";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DailyEntryForm } from "@/modules/daily-inputs/components/DailyEntryForm";
+import { getPreviousEntry, getUserWeekSummary } from "@/modules/daily-inputs/queries";
 import { getSessionUser } from "@/lib/auth/session";
 import { getStudentsForInstructor } from "@/modules/dashboards/instructor/queries";
 import { getStudentsForUser } from "@/modules/youth-coding/queries";
@@ -125,6 +126,31 @@ export default async function SubmitPage() {
     ? await getStudentsForUser(user.id)
     : await getStudentsForInstructor(user.id);
 
+  const [previousEntry, weekSummary] = await Promise.all([
+    user.role === "STUDENT" ? Promise.resolve(null) : getPreviousEntry(user.id, new Date()).then(e => {
+      if (!e) return null;
+      const pe: {
+        attendanceStatus: string;
+        outputCompleted: string;
+        engagementNotes: string;
+        blockers: string;
+        quickSummary: string;
+        engagementScore?: string;
+        extractedMetrics?: Array<{ metricKey: string; metricValue: unknown }>;
+      } = {
+        attendanceStatus: e.attendanceStatus ?? "",
+        outputCompleted: e.outputCompleted ?? "",
+        engagementNotes: e.engagementNotes ?? "",
+        blockers: e.blockers ?? "",
+        quickSummary: e.quickSummary ?? "",
+        extractedMetrics: e.extractedMetrics,
+      };
+      if (e.engagementScore) pe.engagementScore = e.engagementScore;
+      return pe;
+    }),
+    user.role === "STUDENT" ? Promise.resolve(null) : getUserWeekSummary(user.id),
+  ]);
+
   const dashboardHref = getDashboardHref(user.role, user.departmentId, user.id);
 
   const availableOptions = SUBMIT_OPTIONS.filter((opt) => {
@@ -232,6 +258,8 @@ export default async function SubmitPage() {
         <DailyEntryForm
           departmentId={departmentId}
           students={students.map(s => ({ id: s.id, name: s.name, enrollmentStatus: s.enrollmentStatus }))}
+          previousEntry={previousEntry}
+          weekSummary={weekSummary}
         />
       </Container>
     </Box>

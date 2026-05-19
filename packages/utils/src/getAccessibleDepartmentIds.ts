@@ -1,17 +1,20 @@
 import type { PrismaClient } from "@orgos/db";
 
-// Roles that see all departments regardless of their own departmentId
 const ORG_WIDE_ROLES = new Set([
   "COUNTRY_DIRECTOR",
   "ADMIN",
-  "SAFEGUARDING",
+  "HEAD_OF_OPERATIONS",
   "M_AND_E",
+  "SAFEGUARDING",
   "MARKETING_COMMS_MANAGER",
   "BUSINESS_DEVELOPMENT_MANAGER",
   "BUSINESS_DEVELOPMENT_ASSOCIATE",
   "HR_OFFICER",
   "FINANCE_ADMIN_OFFICER",
-  "HEAD_OF_OPERATIONS",
+  "HEAD_OF_DESIGN",
+  "HEAD_OF_DEVELOPMENT",
+  "CAREER_DEVELOPMENT_OFFICER",
+  "REGIONAL_HUB_LEAD",
 ]);
 
 async function collectDescendantIds(
@@ -34,19 +37,18 @@ async function collectDescendantIds(
 /**
  * Returns the set of department IDs a user with the given role can access.
  *
- * - INSTRUCTOR: returns [] — scoped by userId, not department
+ * - INSTRUCTOR / STUDENT / PARTNER: returns [] (scoped by userId, not department)
+ * - ORG_WIDE_ROLES: returns all department IDs
  * - HUB_LEAD: returns [departmentId]
- * - BOOTCAMP_MANAGER: returns [departmentId, ...child hub IDs]
- * - PROGRAM_MANAGER: returns [departmentId, ...all bootcamp + hub IDs beneath]
- * - COUNTRY_DIRECTOR / ADMIN / cross-cutting roles: returns all department IDs
- *   (departmentId argument is ignored for these roles)
+ * - BOOTCAMP_MANAGER, PROGRAM_MANAGER, YOUTH_CODING_MANAGER,
+ *   TEACHER_TRAINING_COORDINATOR: returns [departmentId, ...descendants]
  */
 export async function getAccessibleDepartmentIds(
   role: string,
   departmentId: string | null,
   prisma: PrismaClient,
 ): Promise<string[]> {
-  if (role === "INSTRUCTOR") return [];
+  if (role === "INSTRUCTOR" || role === "STUDENT" || role === "PARTNER") return [];
 
   if (ORG_WIDE_ROLES.has(role)) {
     const all = await prisma.department.findMany({ select: { id: true } });
@@ -57,7 +59,6 @@ export async function getAccessibleDepartmentIds(
 
   if (role === "HUB_LEAD") return [departmentId];
 
-  // BOOTCAMP_MANAGER and PROGRAM_MANAGER: own dept + all descendants
   const descendants = await collectDescendantIds(prisma, departmentId);
   return [departmentId, ...descendants];
 }

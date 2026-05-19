@@ -15,42 +15,8 @@ export async function POST(request: Request) {
   const errors: string[] = [];
   const now = new Date();
 
-  try {
-    const { prisma } = await import("@orgos/db");
-    const departments = await prisma.department.findMany({ select: { id: true } });
-
-    for (const dept of departments) {
-      try {
-        const { generateDailyReport } = await import("@orgos/report-generator");
-        await withRetry(
-          async () => {
-            const result = await generateDailyReport(dept.id, now);
-            if (!result.success &&
-              !result.error?.includes("already exists") &&
-              !result.error?.includes("No daily entries")) {
-              throw new Error(result.error);
-            }
-            return result;
-          },
-          { label: `daily_report:${dept.id}`, maxRetries: 2, baseDelayMs: 3000 }
-        );
-        results.push(`daily_report:${dept.id}:ok`);
-      } catch (err) {
-        errors.push(`daily_report:${dept.id} failed: ${err instanceof Error ? err.message : String(err)}`);
-      }
-    }
-  } catch (err) {
-    errors.push(`daily_report step failed: ${err instanceof Error ? err.message : String(err)}`);
-  }
-
-  try {
-    const { runEndOfDayChecks } = await import("@orgos/anomaly-detection");
-    await runEndOfDayChecks(now);
-    results.push(`anomaly_checks:ok for ${now.toISOString().slice(0, 10)}`);
-  } catch (err) {
-    errors.push(`anomaly_checks failed: ${err instanceof Error ? err.message : String(err)}`);
-  }
-
+  // Step 1: Extract metrics for pending entries BEFORE generating daily reports
+  // (daily report depends on extracted metrics)
   try {
     const { prisma, EntryStatus } = await import("@orgos/db");
     const pendingEntries = await prisma.dailyEntry.findMany({
@@ -87,6 +53,45 @@ export async function POST(request: Request) {
     errors.push(`metric_extraction failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
+  // Step 2: Generate daily reports (now with extracted metrics available)
+  try {
+    const { prisma } = await import("@orgos/db");
+    const departments = await prisma.department.findMany({ select: { id: true } });
+
+    for (const dept of departments) {
+      try {
+        const { generateDailyReport } = await import("@orgos/report-generator");
+        await withRetry(
+          async () => {
+            const result = await generateDailyReport(dept.id, now);
+            if (!result.success &&
+              !result.error?.includes("already exists") &&
+              !result.error?.includes("No daily entries")) {
+              throw new Error(result.error);
+            }
+            return result;
+          },
+          { label: `daily_report:${dept.id}`, maxRetries: 2, baseDelayMs: 3000 }
+        );
+        results.push(`daily_report:${dept.id}:ok`);
+      } catch (err) {
+        errors.push(`daily_report:${dept.id} failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  } catch (err) {
+    errors.push(`daily_report step failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  // Step 3: Anomaly detection
+  try {
+    const { runEndOfDayChecks } = await import("@orgos/anomaly-detection");
+    await runEndOfDayChecks(now);
+    results.push(`anomaly_checks:ok for ${now.toISOString().slice(0, 10)}`);
+  } catch (err) {
+    errors.push(`anomaly_checks failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  // Step 4: Refresh dashboard snapshots
   try {
     const { prisma } = await import("@orgos/db");
     const { refreshDepartmentSnapshot } = await import("@orgos/dashboard-engine");

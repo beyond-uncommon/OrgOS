@@ -3,6 +3,7 @@ import { verifyCronRequest } from "@/lib/cron/auth";
 import { prisma } from "@orgos/db";
 import { toDateOnly } from "@orgos/utils";
 import { sendBulkMissedDeadline } from "@/lib/email/service";
+import { sendSlackMissedDeadline } from "@/lib/notifications/slack";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,15 @@ export async function POST(request: Request) {
           submissionCount: dates.size,
           missedDays,
         });
+
+        if (process.env.SLACK_WEBHOOK_URL && missedDays >= 2) {
+          void sendSlackMissedDeadline({
+            instructorName: inst.name,
+            hubName: dept.name,
+            missedDays,
+            departmentId: dept.id,
+          });
+        }
       }
     }
   }
@@ -78,6 +88,7 @@ export async function POST(request: Request) {
     results: [
       `submission_missed:sent ${result.sent} email(s)`,
       `submission_missed:notified ${missing.length} instructor(s)`,
+      process.env.SLACK_WEBHOOK_URL ? "submission_missed:slack_notified (2+ days)" : "submission_missed:slack_skipped (not configured)",
       ...(result.errors.length ? result.errors.map((e, i) => `submission_missed:error:${i} ${e}`) : []),
     ],
   });

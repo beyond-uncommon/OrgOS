@@ -13,6 +13,10 @@
       "schedule": "0 8 * * 1"
     },
     {
+      "path": "/api/cron/weekly-brief",
+      "schedule": "0 8 * * 5"
+    },
+    {
       "path": "/api/cron/monthly",
       "schedule": "0 9 1 * *"
     },

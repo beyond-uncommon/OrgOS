@@ -1,6 +1,4 @@
 import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/auth/session";
-import { getAccessibleDepartmentIds } from "@orgos/utils";
 import { prisma, MetricSource } from "@orgos/db";
 import { Box, Typography, Container, Alert, Chip, Stack, Divider } from "@mui/material";
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
@@ -9,23 +7,24 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import Link from "next/link";
 import Button from "@mui/material/Button";
+import { requireAccess } from "@/lib/auth/requireAccess";
 
 export default async function InsightsPage() {
-  const sessionUser = await getSessionUser();
-  if (!sessionUser) redirect("/login");
+  const { user, departmentIds } = await requireAccess([
+    "HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "COUNTRY_DIRECTOR",
+    "YOUTH_CODING_MANAGER", "ADMIN", "HEAD_OF_OPERATIONS", "M_AND_E",
+    "SAFEGUARDING", "MARKETING_COMMS_MANAGER", "BUSINESS_DEVELOPMENT_MANAGER",
+    "BUSINESS_DEVELOPMENT_ASSOCIATE", "HR_OFFICER", "FINANCE_ADMIN_OFFICER",
+    "HEAD_OF_DESIGN", "HEAD_OF_DEVELOPMENT", "CAREER_DEVELOPMENT_OFFICER",
+    "REGIONAL_HUB_LEAD",
+  ]);
 
-  const { role, departmentId, id: userId } = sessionUser;
-
-  if (role === "INSTRUCTOR") {
-    redirect(`/departments/${departmentId}/instructors/${userId}`);
-  }
-
-  const accessibleIds = await getAccessibleDepartmentIds(role, departmentId, prisma);
+  const accessibleIds = departmentIds;
 
   const [alerts, weeklyReports, metricsCount, departmentCount] = await Promise.all([
     accessibleIds.length > 0
       ? prisma.alert.findMany({
-          where: { resolved: false },
+          where: { resolved: false, entry: { departmentId: { in: accessibleIds } } },
           orderBy: { createdAt: "desc" },
           take: 20,
           include: { entry: { select: { date: true, departmentId: true } } },

@@ -486,6 +486,7 @@ async function main() {
   await prisma.user.create({ data: { email: "bizdev.assoc@uncommon.org", name: "James Kariuki", role: Role.BUSINESS_DEVELOPMENT_ASSOCIATE, departmentId: org.id } });
   await prisma.user.create({ data: { email: "hr@uncommon.org", name: "Priya Sharma", role: Role.HR_OFFICER, departmentId: org.id } });
   await prisma.user.create({ data: { email: "finance@uncommon.org", name: "Kwame Asare", role: Role.FINANCE_ADMIN_OFFICER, departmentId: org.id } });
+  await prisma.user.create({ data: { email: "partner@uncommon.org", name: "Partner User", role: Role.PARTNER, departmentId: org.id } });
 
   // ── Instructors ───────────────────────────────────────────────────────────
   const hub1Instructors = await Promise.all(

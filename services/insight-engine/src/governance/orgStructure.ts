@@ -24,6 +24,7 @@ export const ROLE_TO_ORG_NODE: Record<Role, OrgNode> = {
   [Role.HEAD_OF_OPERATIONS]:            "EXECUTIVE",
   [Role.ADMIN]:                         "EXECUTIVE",
   [Role.STUDENT]:                       "INSTRUCTOR",
+  [Role.PARTNER]:                       "DEPARTMENT_HEAD",
 };
 
 /** Returns true if `candidate` has equal or greater authority than `required` */

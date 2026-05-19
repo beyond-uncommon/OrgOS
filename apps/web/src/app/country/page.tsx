@@ -2,13 +2,13 @@ import { redirect } from "next/navigation";
 import { Box, Container, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import Link from "next/link";
-import { getSessionUser } from "@/lib/auth/session";
 import { UserBar } from "@/components/UserBar";
 import { RisksPanel } from "@/modules/dashboards/department/RisksPanel";
 import { getCountryDashboardData } from "@/modules/dashboards/country/queries";
 import { getYCOrgSummary } from "@/modules/youth-coding/queries";
 import { YCPanel } from "@/modules/youth-coding/components/YCPanel";
 import type { Alert } from "@orgos/db";
+import { requireAccess } from "@/lib/auth/requireAccess";
 
 function latestMetric(data: Record<string, unknown[]> | null, key: string): number | null {
   if (!data) return null;
@@ -19,26 +19,14 @@ function latestMetric(data: Record<string, unknown[]> | null, key: string): numb
 }
 
 export default async function CountryDirectorPage() {
-  const sessionUser = await getSessionUser();
-  if (!sessionUser) redirect("/login");
-
-  const role = sessionUser.role;
-  if (!["COUNTRY_DIRECTOR", "ADMIN", "HEAD_OF_OPERATIONS", "M_AND_E", "SAFEGUARDING", "MARKETING_COMMS_MANAGER", "BUSINESS_DEVELOPMENT_MANAGER", "BUSINESS_DEVELOPMENT_ASSOCIATE", "HR_OFFICER", "FINANCE_ADMIN_OFFICER"].includes(role)) {
-    if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
-    else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
-    else if (role === "BOOTCAMP_MANAGER") redirect(`/bootcamps/${sessionUser.departmentId}`);
-    else if (role === "PROGRAM_MANAGER") redirect("/programs");
-    else if (role === "YOUTH_CODING_MANAGER") redirect("/youth-coding");
-    else if (role === "TEACHER_TRAINING_COORDINATOR") redirect(`/programs/${sessionUser.departmentId}`);
-    else redirect("/coming-soon");
-  }
-
-  if (role === "COUNTRY_DIRECTOR" || role === "ADMIN") {
-    redirect("/org");
-  }
+  const { user, departmentIds } = await requireAccess([
+    "HEAD_OF_OPERATIONS", "M_AND_E", "SAFEGUARDING",
+    "MARKETING_COMMS_MANAGER", "BUSINESS_DEVELOPMENT_MANAGER",
+    "BUSINESS_DEVELOPMENT_ASSOCIATE", "HR_OFFICER", "FINANCE_ADMIN_OFFICER",
+  ]);
 
   const { programs, programManagers, bootcamps, hubs, latestSnapshot, alerts, studentCount } =
-    await getCountryDashboardData();
+    await getCountryDashboardData(departmentIds);
 
   const allHubIds = hubs.map((h: { id: string }) => h.id);
   const ycSummary = await getYCOrgSummary(allHubIds);
@@ -68,7 +56,7 @@ export default async function CountryDirectorPage() {
               <Box sx={{ width: 1, height: 20, bgcolor: "divider" }} />
               <Typography variant="body2" sx={{ color: "text.secondary" }}>Country Overview</Typography>
             </Box>
-            {sessionUser && <UserBar name={sessionUser.name} role={sessionUser.role} />}
+            <UserBar name={user.name} role={user.role} />
           </Box>
         </Container>
       </Box>

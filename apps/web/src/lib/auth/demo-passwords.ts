@@ -26,6 +26,7 @@ const DEV_PASSWORDS: Record<string, string> = {
   "bizdev.assoc@uncommon.org": "bizdev2",
   "hr@uncommon.org": "hr",
   "finance@uncommon.org": "finance",
+  "partner@uncommon.org": "partner2024",
 };
 
 export function getDemoPasswords(): Record<string, string> {

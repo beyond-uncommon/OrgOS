@@ -55,6 +55,10 @@ const ROUTE_GUARDS: RouteGuard[] = [
   { pattern: /^\/reports$/, roles: new Set(["HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER", "COUNTRY_DIRECTOR", "YOUTH_CODING_MANAGER", ...ORG_WIDE]) },
   { pattern: /^\/coming-soon$/, roles: ALL_STAFF },
   { pattern: /^\/roles\/[^/]+$/, roles: ALL_STAFF },
+  { pattern: /^\/portal$/, roles: new Set(["PARTNER", "COUNTRY_DIRECTOR", "ADMIN"]) },
+  { pattern: /^\/students(?:$|\/.*$)/, roles: new Set(["PROGRAM_MANAGER", "BOOTCAMP_MANAGER", "YOUTH_CODING_MANAGER", "COUNTRY_DIRECTOR", "ADMIN"]) },
+  { pattern: /^\/funding$/, roles: new Set(["COUNTRY_DIRECTOR", "ADMIN", "FINANCE_ADMIN_OFFICER", "BUSINESS_DEVELOPMENT_MANAGER", "BUSINESS_DEVELOPMENT_ASSOCIATE"]) },
+  { pattern: /^\/governance$/, roles: new Set(["COUNTRY_DIRECTOR", "ADMIN"]) },
 ];
 
 function getRoleFromCookie(request: NextRequest): string | null {

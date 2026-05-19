@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 import { Box, Container, Typography, Chip } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import Link from "next/link";
-import { getSessionUser } from "@/lib/auth/session";
 import { UserBar } from "@/components/UserBar";
 import { RisksPanel } from "@/modules/dashboards/department/RisksPanel";
 import { getAllProgramsData } from "@/modules/dashboards/program/queries";
 import type { Alert } from "@orgos/db";
+import { requireAccess } from "@/lib/auth/requireAccess";
 
 function latestMetric(data: Record<string, unknown[]> | null, key: string): number | null {
   if (!data) return null;
@@ -24,18 +24,12 @@ function statusColor(status: string): "default" | "warning" | "success" | "info"
 }
 
 export default async function ProgramsOverviewPage() {
-  const sessionUser = await getSessionUser();
-  if (!sessionUser) redirect("/login");
+  const { user, departmentIds } = await requireAccess([
+    "PROGRAM_MANAGER", "ADMIN", "COUNTRY_DIRECTOR",
+    "TEACHER_TRAINING_COORDINATOR",
+  ]);
 
-  const role = sessionUser.role;
-  const allowed = new Set(["PROGRAM_MANAGER", "ADMIN", "COUNTRY_DIRECTOR"]);
-  if (!allowed.has(role)) {
-    if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
-    else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
-    else redirect("/coming-soon");
-  }
-
-  const allData = await getAllProgramsData();
+  const allData = await getAllProgramsData(departmentIds);
   const { ycData, bootcampData, ttReports, outreachReports } = allData;
 
   return (
@@ -50,7 +44,7 @@ export default async function ProgramsOverviewPage() {
               <Box sx={{ width: 1, height: 20, bgcolor: "divider" }} />
               <Typography variant="body2" sx={{ color: "text.secondary" }}>Program Overview</Typography>
             </Box>
-            {sessionUser && <UserBar name={sessionUser.name} role={sessionUser.role} />}
+            <UserBar name={user.name} role={user.role} />
           </Box>
         </Container>
       </Box>

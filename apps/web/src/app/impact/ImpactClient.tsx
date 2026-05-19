@@ -12,6 +12,10 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { BarChart } from "@mui/x-charts/BarChart";
+import { StoriesGrid } from "@/modules/stories/StoriesGrid";
+import { StoryModal } from "@/modules/stories/StoryModal";
+import { PhotoGrid } from "@/modules/gallery/PhotoGrid";
+import { PDFReportButton } from "@/modules/report-export/PDFReportButton";
 
 function fmt(n: number): string {
   return n.toLocaleString("en-US");
@@ -66,6 +70,10 @@ interface GenderItem { gender: string; count: number }
 
 interface StudentQuote { student: string; quote: string; rating: number; date: Date }
 
+interface StoryData { id: string; title: string; excerpt: string | null; authorName: string; authorRole: string; studentAge?: number; studentProgram?: string; heroImage?: string; tags: string[]; featured: boolean; viewCount: number; createdAt: string; department?: { name: string } | null }
+
+interface PhotoData { id: string; url: string; caption: string; credit: string; eventName: string; eventDate: string; program: string; tags: string[]; featured: boolean; createdAt: string; department?: { name: string } | null }
+
 interface Props {
   overview: {
     totalStudents: number;
@@ -96,6 +104,8 @@ interface Props {
   teacherTrainingFunding: number;
   outreachName: string;
   outreachFunding: number;
+  stories: StoryData[];
+  photos: PhotoData[];
 }
 
 function MetricCard({ label, value, color, trend }: { label: string; value: string; color?: string; trend?: React.ReactNode }) {
@@ -220,8 +230,9 @@ function FunderLogo({ name }: { name: string }) {
 }
 
 export function ImpactClient(props: Props) {
-  const { overview, ycData, bootcampData, teacherTrainingName, teacherTrainingFunding, outreachName, outreachFunding } = props;
+  const { overview, ycData, bootcampData, teacherTrainingName, teacherTrainingFunding, outreachName, outreachFunding, stories, photos } = props;
   const [tab, setTab] = React.useState(0);
+  const [activeStory, setActiveStory] = React.useState<StoryData | null>(null);
 
   const activeProgramName = tab === 1 ? ycData?.name : tab === 2 ? bootcampData?.name : tab === 3 ? teacherTrainingName : tab === 4 ? outreachName : null;
   const programDesc = activeProgramName ? PROGRAM_DESCRIPTIONS[activeProgramName] : null;
@@ -491,10 +502,71 @@ export function ImpactClient(props: Props) {
                 Live metrics will appear once programs are active. In the meantime, these are our targets for 2026.
               </Typography>
             </Box>
-          </>
+</>
         )}
 
-        {/* ── SHARED: FUNDERS SECTION ─────────────────────── */}
+        {/* ── SHARED: STORIES ─────────────────────────────────────── */}
+        {stories.length > 0 && (
+          <Box sx={{ mb: 5 }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+              Impact Stories
+            </Typography>
+            <StoriesGrid
+              stories={stories.map(s => ({
+                id: s.id,
+                title: s.title,
+                excerpt: s.excerpt,
+                authorName: s.authorName,
+                authorRole: s.authorRole,
+                heroImage: s.heroImage ?? null,
+                tags: s.tags,
+                featured: s.featured,
+                viewCount: s.viewCount,
+                createdAt: new Date(s.createdAt),
+                department: s.department ?? null,
+              }))}
+              showFeaturedBadge
+              onStoryClick={(story) => setActiveStory(story as unknown as StoryData)}
+            />
+          </Box>
+        )}
+
+        {/* ── SHARED: PHOTO GALLERY ──────────────────────────── */}
+        {photos.length > 0 && (
+          <Box sx={{ mb: 5 }}>
+            <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+              Moments &amp; Events
+            </Typography>
+            <PhotoGrid
+              photos={photos.map(p => ({ ...p, eventDate: new Date(p.eventDate), createdAt: new Date(p.createdAt) }))}
+            />
+          </Box>
+        )}
+
+        {/* ── SHARED: ANNUAL REPORT ──────────────────────────── */}
+        <Box sx={{ mb: 5 }}>
+          <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+            Annual Report
+          </Typography>
+          <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: 3, bgcolor: "background.paper" }}>
+            <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Download Our Annual Report</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+              Get a comprehensive PDF summary of our programs, outcomes, and financial performance.
+            </Typography>
+            <PDFReportButton
+              title="Uncommon.org Annual Report"
+              overview={overview}
+              programs={[
+                ...(ycData ? [{ name: ycData.name, students: ycData.students, funding: ycData.funding }] : []),
+                ...(bootcampData ? [{ name: bootcampData.name, students: bootcampData.students, funding: bootcampData.funding }] : []),
+                { name: teacherTrainingName, students: 0, funding: teacherTrainingFunding },
+                { name: outreachName, students: 0, funding: outreachFunding },
+              ]}
+            />
+          </Box>
+        </Box>
+
+        {/* ── SHARED: FUNDERS SECTION ──────────────────────── */}
         <Box sx={{ mb: 5 }}>
           <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
             Supported By
@@ -559,6 +631,24 @@ export function ImpactClient(props: Props) {
           </Typography>
         </Box>
       </Container>
+      <StoryModal
+        story={{
+          id: activeStory!.id,
+          title: activeStory!.title,
+          body: activeStory?.excerpt ?? "",
+          authorName: activeStory!.authorName,
+          authorRole: activeStory?.authorRole ?? "",
+          tags: activeStory?.tags ?? [],
+          featured: activeStory?.featured ?? false,
+          heroImage: activeStory?.heroImage ?? null,
+          studentAge: activeStory?.studentAge != null ? String(activeStory.studentAge) : null,
+          studentProgram: activeStory?.studentProgram ?? null,
+          createdAt: activeStory?.createdAt ? new Date(activeStory.createdAt) : new Date(),
+          department: activeStory?.department ?? null,
+        }}
+        open={!!activeStory}
+        onClose={() => setActiveStory(null)}
+      />
     </Box>
   );
 }

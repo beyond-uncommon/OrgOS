@@ -14,6 +14,7 @@ const DEMO_ACCOUNTS = [
   { role: "Teacher Training Coord",   email: "pm.tt@uncommon.org",           password: "pm.tt",        access: "Teacher Training program view" },
   { role: "Country Director",         email: "director@uncommon.org",        password: "director",     access: "Org-wide KPIs, all programs, org alerts" },
   { role: "Admin",                    email: "admin@uncommon.org",           password: "admin",        access: "Full system access" },
+  { role: "Partner / Funder",         email: "partner@uncommon.org",         password: "partner2024",  access: "Read-only impact portal" },
 ];
 
 export default function LoginPage() {

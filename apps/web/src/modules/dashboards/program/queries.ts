@@ -78,19 +78,46 @@ export async function getProgramWeeklyReports(programDepartmentId: string) {
   return getWeeklyReportsByDepartment(programDepartmentId);
 }
 
-export async function getAllProgramsData() {
-  const [ycData, bootcampData, ttReports, outreachReports] = await Promise.all([
-    getYCProgramData("prog-yc").catch(() => null),
-    getProgramDashboardData("prog-bootcamp").catch(() => null),
-    getWeeklyReportsByDepartment("prog-teacher-training").catch(() => []),
-    getWeeklyReportsByDepartment("prog-outreach").catch(() => []),
-  ]);
-
-  const programInfo = await prisma.department.findMany({
-    where: { id: { in: ["prog-yc", "prog-bootcamp", "prog-teacher-training", "prog-outreach"] } },
-    select: { id: true, name: true },
+export async function getAllProgramsData(departmentIds: string[]) {
+  const orgRoot = await prisma.department.findFirst({
+    where: { parentDepartmentId: null },
+    select: { id: true },
   });
-  const programMap = Object.fromEntries(programInfo.map(p => [p.id, p.name]));
 
-  return { ycData, bootcampData, ttReports, outreachReports, programMap };
+  const programDepts = orgRoot
+    ? await prisma.department.findMany({
+        where: { id: { in: departmentIds }, parentDepartmentId: orgRoot.id },
+        select: { id: true, name: true },
+      })
+    : [];
+
+  const programMap = Object.fromEntries(programDepts.map(p => [p.id, p.name]));
+
+  const programTypes = ["YOUTH_CODING", "BOOTCAMP", "TEACHER_TRAINING", "OUTREACH"] as const;
+  const programData: Record<string, unknown> = {};
+
+  for (const program of programDepts) {
+    const type = detectProgramType(program.name);
+    if (type === "YOUTH_CODING") {
+      programData.ycData = await getYCProgramData(program.id).catch(() => null);
+    } else if (type === "BOOTCAMP") {
+      programData.bootcampData = await getProgramDashboardData(program.id).catch(() => null);
+    } else if (type === "TEACHER_TRAINING") {
+      programData.ttReports = (programData.ttReports as Array<unknown> || []).concat(
+        await getWeeklyReportsByDepartment(program.id).catch(() => [])
+      );
+    } else if (type === "OUTREACH") {
+      programData.outreachReports = (programData.outreachReports as Array<unknown> || []).concat(
+        await getWeeklyReportsByDepartment(program.id).catch(() => [])
+      );
+    }
+  }
+
+  return {
+    ycData: programData.ycData as Awaited<ReturnType<typeof getYCProgramData>> | null ?? null,
+    bootcampData: programData.bootcampData as Awaited<ReturnType<typeof getProgramDashboardData>> | null ?? null,
+    ttReports: (programData.ttReports || []) as Awaited<ReturnType<typeof getWeeklyReportsByDepartment>>,
+    outreachReports: (programData.outreachReports || []) as Awaited<ReturnType<typeof getWeeklyReportsByDepartment>>,
+    programMap,
+  };
 }

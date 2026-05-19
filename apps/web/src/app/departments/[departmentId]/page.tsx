@@ -16,6 +16,8 @@ import { RisksPanel } from "@/modules/dashboards/department/RisksPanel";
 import { InsightNarrativePanel } from "@/modules/dashboards/department/InsightNarrativePanel";
 import { ApprovalQueuePanel } from "@/modules/dashboards/department/ApprovalQueuePanel";
 import { DailyReportsSummary } from "@/modules/dashboards/department/DailyReportsSummary";
+import { AnnouncementsList } from "@/modules/announcements";
+import { getDepartmentAnnouncements } from "@/modules/announcements/queries";
 import type { InsightReport } from "@orgos/shared-types";
 import type { Alert as AlertModel } from "@orgos/db";
 
@@ -71,7 +73,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
     redirect(`/departments/${user.departmentId}`);
   }
 
-  const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, instructors, dept, ycSummary, dailyReports, submissionStatus] = await Promise.all([
+  const [dailySnapshot, weeklySnapshot, rawAlerts, pendingActions, instructors, dept, ycSummary, dailyReports, submissionStatus, announcements] = await Promise.all([
     getDepartmentDashboard(departmentId),
     getWeeklyInsightSnapshot(departmentId),
     getRecentAlerts(departmentId),
@@ -81,6 +83,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
     getYCHubSummary(departmentId),
     getDepartmentDailyReports(departmentId),
     getTodaySubmissionStatus(departmentId),
+    getDepartmentAnnouncements(departmentId),
   ]);
 
   const metricsData = dailySnapshot?.data as Record<string, unknown[]> | null;
@@ -161,7 +164,7 @@ export default async function DepartmentDashboardPage({ params }: Props) {
             <Box sx={{ mb: 4 }}>
               <SectionLabel primary>Today&apos;s Operational Metrics</SectionLabel>
               {metricsData ? (
-                <MetricsStrip data={metricsData} />
+                <MetricsStrip data={metricsData} departmentId={departmentId} />
               ) : (
                 <EmptyState message="No metrics snapshot available. Submit entries to populate." />
               )}
@@ -300,6 +303,24 @@ export default async function DepartmentDashboardPage({ params }: Props) {
                   submitted={submissionStatus.submitted}
                   total={submissionStatus.total}
                   completionRate={submissionStatus.completionRate}
+                />
+              </Box>
+
+              {/* Announcements */}
+              <Box
+                sx={{
+                  bgcolor: "background.paper",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  p: 2.5,
+                }}
+              >
+                <AnnouncementsList
+                  announcements={announcements.map(a => ({ ...a, createdAt: a.createdAt }))}
+                  currentUserRole={user.role}
+                  currentUserId={user.id}
+                  currentDepartmentId={departmentId}
                 />
               </Box>
 

@@ -3,13 +3,13 @@ import { Box, Container, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import Link from "next/link";
 import { prisma } from "@orgos/db";
-import { getSessionUser } from "@/lib/auth/session";
 import { UserBar } from "@/components/UserBar";
 import { RisksPanel } from "@/modules/dashboards/department/RisksPanel";
 import { getBootcampDashboardData } from "@/modules/dashboards/bootcamp/queries";
 import { getYCBootcampAggregate } from "@/modules/youth-coding/queries";
 import { YCPanel } from "@/modules/youth-coding/components/YCPanel";
 import type { Alert } from "@orgos/db";
+import { requireAccess } from "@/lib/auth/requireAccess";
 
 interface Props {
   params: Promise<{ departmentId: string }>;
@@ -42,18 +42,12 @@ function latestString(data: Record<string, unknown[]> | null, key: string): stri
 export default async function BootcampDashboardPage({ params }: Props) {
   const { departmentId } = await params;
 
-  const sessionUser = await getSessionUser();
-  if (!sessionUser) redirect("/login");
+  const { user, departmentIds } = await requireAccess([
+    "BOOTCAMP_MANAGER", "ADMIN",
+  ]);
 
-  const role = sessionUser.role;
-  if (role !== "BOOTCAMP_MANAGER" && role !== "ADMIN") {
-    if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
-    else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
-    else if (role === "PROGRAM_MANAGER") redirect("/programs");
-    else if (role === "YOUTH_CODING_MANAGER") redirect("/youth-coding");
-    else if (role === "TEACHER_TRAINING_COORDINATOR") redirect(`/programs/${sessionUser.departmentId}`);
-    else if (role === "COUNTRY_DIRECTOR") redirect("/country");
-    else redirect("/coming-soon");
+  if (!departmentIds.includes(departmentId)) {
+    redirect("/404");
   }
 
   const bootcamp = await prisma.department.findUnique({
@@ -97,7 +91,7 @@ export default async function BootcampDashboardPage({ params }: Props) {
               <Box sx={{ width: 1, height: 20, bgcolor: "divider" }} />
               <Typography variant="body2" sx={{ color: "text.secondary" }}>{bootcamp.name}</Typography>
             </Box>
-            {sessionUser && <UserBar name={sessionUser.name} role={sessionUser.role} />}
+            <UserBar name={user.name} role={user.role} />
           </Box>
         </Container>
       </Box>

@@ -1,27 +1,23 @@
-import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/auth/session";
-import { getAccessibleDepartmentIds } from "@orgos/utils";
 import { prisma } from "@orgos/db";
 import { ApprovalsClient } from "@/modules/approvals/components/ApprovalsClient";
+import { requireAccess } from "@/lib/auth/requireAccess";
 
 export default async function ApprovalsPage() {
-  const sessionUser = await getSessionUser();
-  if (!sessionUser) redirect("/login");
-
-  const { role, departmentId, id: userId } = sessionUser;
-
-  if (role === "INSTRUCTOR") {
-    redirect(`/departments/${departmentId}/instructors/${userId}`);
-  }
-
-  const accessibleIds = await getAccessibleDepartmentIds(role, departmentId, prisma);
+  const { user, departmentIds } = await requireAccess([
+    "HUB_LEAD", "BOOTCAMP_MANAGER", "PROGRAM_MANAGER",
+    "YOUTH_CODING_MANAGER", "COUNTRY_DIRECTOR", "ADMIN",
+    "HEAD_OF_OPERATIONS", "M_AND_E", "SAFEGUARDING",
+    "MARKETING_COMMS_MANAGER", "HEAD_OF_DESIGN", "HEAD_OF_DEVELOPMENT",
+    "CAREER_DEVELOPMENT_OFFICER", "REGIONAL_HUB_LEAD",
+    "TEACHER_TRAINING_COORDINATOR",
+  ]);
 
   const [editRequests, pendingActions] = await Promise.all([
-    accessibleIds.length > 0
+    departmentIds.length > 0
       ? prisma.entryEditRequest.findMany({
           where: {
             status: "PENDING",
-            entry: { departmentId: { in: accessibleIds } },
+            entry: { departmentId: { in: departmentIds } },
           },
           orderBy: { createdAt: "asc" },
           select: {
@@ -41,10 +37,10 @@ export default async function ApprovalsPage() {
           },
         })
       : Promise.resolve([]),
-    accessibleIds.length > 0
+    departmentIds.length > 0
       ? prisma.pendingAction.findMany({
           where: {
-            departmentId: { in: accessibleIds },
+            departmentId: { in: departmentIds },
             status: "PENDING",
             expiresAt: { gt: new Date() },
           },
@@ -66,8 +62,8 @@ export default async function ApprovalsPage() {
     <ApprovalsClient
       editRequests={editRequests as never[]}
       pendingActions={pendingActions as never[]}
-      userRole={role}
-      userDepartmentId={departmentId}
+      userRole={user.role}
+      userDepartmentId={user.departmentId}
     />
   );
 }

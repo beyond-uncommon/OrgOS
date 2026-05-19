@@ -2,8 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { Box, Container, Typography, Chip } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import Link from "next/link";
-import { prisma } from "@orgos/db";
-import { getSessionUser } from "@/lib/auth/session";
 import { UserBar } from "@/components/UserBar";
 import { RisksPanel } from "@/modules/dashboards/department/RisksPanel";
 import {
@@ -13,6 +11,8 @@ import {
   detectProgramType,
 } from "@/modules/dashboards/program/queries";
 import type { Alert } from "@orgos/db";
+import { prisma } from "@orgos/db";
+import { requireAccess } from "@/lib/auth/requireAccess";
 
 interface Props {
   params: Promise<{ departmentId: string }>;
@@ -36,17 +36,12 @@ function statusColor(status: string): "default" | "warning" | "success" | "info"
 export default async function ProgramDashboardPage({ params }: Props) {
   const { departmentId } = await params;
 
-  const sessionUser = await getSessionUser();
-  if (!sessionUser) redirect("/login");
+  const { user, departmentIds } = await requireAccess([
+    "ADMIN", "COUNTRY_DIRECTOR", "TEACHER_TRAINING_COORDINATOR",
+  ]);
 
-  const role = sessionUser.role;
-  if (role === "BOOTCAMP_MANAGER") redirect(`/bootcamps/${sessionUser.departmentId}`);
-  if (role === "PROGRAM_MANAGER") redirect("/programs");
-  if (role === "YOUTH_CODING_MANAGER") redirect("/youth-coding");
-  if (!["ADMIN", "COUNTRY_DIRECTOR", "TEACHER_TRAINING_COORDINATOR"].includes(role)) {
-    if (role === "INSTRUCTOR") redirect(`/departments/${sessionUser.departmentId}/instructors/${sessionUser.id}`);
-    else if (role === "HUB_LEAD") redirect(`/departments/${sessionUser.departmentId}`);
-    else redirect("/coming-soon");
+  if (!departmentIds.includes(departmentId)) {
+    redirect("/404");
   }
 
   const program = await prisma.department.findUnique({
@@ -82,7 +77,7 @@ export default async function ProgramDashboardPage({ params }: Props) {
               <Box sx={{ width: 1, height: 20, bgcolor: "divider" }} />
               <Typography variant="body2" sx={{ color: "text.secondary" }}>{program.name}</Typography>
             </Box>
-            {sessionUser && <UserBar name={sessionUser.name} role={sessionUser.role} />}
+            <UserBar name={user.name} role={user.role} />
           </Box>
         </Container>
       </Box>

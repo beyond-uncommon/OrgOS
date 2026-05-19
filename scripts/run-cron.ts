@@ -2,8 +2,9 @@
  * Cron runner — triggers pipeline jobs locally via the dev server API.
  *
  * Usage:
-*   CRON_SECRET="..." npx tsx scripts/run-cron.ts daily
+ *   CRON_SECRET="..." npx tsx scripts/run-cron.ts daily
  *   CRON_SECRET="..." npx tsx scripts/run-cron.ts weekly
+ *   CRON_SECRET="..." npx tsx scripts/run-cron.ts weekly-brief
  *   CRON_SECRET="..." npx tsx scripts/run-cron.ts monthly
  *   CRON_SECRET="..." npx tsx scripts/run-cron.ts reminder
  *   CRON_SECRET="..." npx tsx scripts/run-cron.ts missed
@@ -21,12 +22,12 @@ if (!SECRET) {
   process.exit(1);
 }
 
-if (!JOB || !["daily", "weekly", "monthly", "reminder", "missed", "all"].includes(JOB)) {
-  console.error("Usage: CRON_SECRET=... npx tsx scripts/run-cron.ts [daily|weekly|monthly|reminder|missed|all]");
+if (!JOB || !["daily", "weekly", "weekly-brief", "monthly", "reminder", "missed", "all"].includes(JOB)) {
+  console.error("Usage: CRON_SECRET=... npx tsx scripts/run-cron.ts [daily|weekly|weekly-brief|monthly|reminder|missed|all]");
   process.exit(1);
 }
 
-const JOBS = JOB === "all" ? ["daily", "weekly", "monthly", "reminder", "missed"] as const : [JOB] as const;
+const JOBS = JOB === "all" ? ["daily", "weekly", "weekly-brief", "monthly", "reminder", "missed"] as const : [JOB] as const;
 
 async function main() {
   for (const job of JOBS) {
