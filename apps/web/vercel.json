@@ -1,7 +1,7 @@
 {
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "cd ../.. && pnpm --filter @orgos/db exec prisma generate && DATABASE_URL=\"postgresql://postgres.zxgxwpooruodelyahead:1ambeyondordg@aws-1-eu-west-3.pooler.supabase.com:5432/postgres\" pnpm --filter @orgos/db exec prisma db push --accept-data-loss && pnpm --filter web build",
+  "buildCommand": "cd ../.. && pnpm --filter @orgos/db exec prisma generate && pnpm --filter @orgos/db exec prisma db push --accept-data-loss && pnpm --filter web build",
   "outputDirectory": ".next",
   "crons": [
     {
