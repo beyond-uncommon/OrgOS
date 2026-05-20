@@ -326,7 +326,7 @@ async function sendBriefToSlack(hubName: string, content: string): Promise<void>
   });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
   const auth = verifyCronRequest(request);
   if (!auth.authorized) {
     return NextResponse.json({ error: auth.reason }, { status: 401 });

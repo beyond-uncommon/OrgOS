@@ -3,7 +3,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { getAccessibleDepartmentIds } from "@orgos/utils";
 import { prisma } from "@orgos/db";
 
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   const sessionUser = await getSessionUser();
   if (!sessionUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

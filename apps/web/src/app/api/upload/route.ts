@@ -6,7 +6,7 @@ import { getSessionUser } from "@/lib/auth/session";
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const MAX_SIZE = 5 * 1024 * 1024;
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

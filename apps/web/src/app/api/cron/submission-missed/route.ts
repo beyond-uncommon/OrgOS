@@ -7,7 +7,7 @@ import { sendSlackMissedDeadline } from "@/lib/notifications/slack";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
   const auth = verifyCronRequest(request);
   if (!auth.authorized) {
     return NextResponse.json({ error: auth.reason }, { status: 401 });

@@ -6,7 +6,7 @@ import type { InsightReport } from "@orgos/shared-types";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
   const auth = verifyCronRequest(request);
   if (!auth.authorized) {
     return NextResponse.json({ error: auth.reason }, { status: 401 });

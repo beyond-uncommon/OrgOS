@@ -38,7 +38,7 @@ const VALID_METRICS = [
 export async function GET(
   req: NextRequest,
   { params }: { params: { type: string } }
-) {
+): Promise<NextResponse> {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
