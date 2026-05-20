@@ -19,11 +19,19 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@orgos/db": [
+        "../../packages/db/src/index.ts"
+      ],
+      "@orgos/db/*": [
+        "../../packages/db/src/*"
       ]
     },
     "allowJs": true,
     "noEmit": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "declaration": false,
+    "declarationMap": false
   },
   "include": [
     "next-env.d.ts",
