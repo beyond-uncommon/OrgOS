@@ -57,7 +57,7 @@ export default async function ExecutivePage() {
     }),
     prisma.alert.findMany({
       where: { resolved: false },
-      orderBy: { severity: "desc", createdAt: "desc" },
+      orderBy: [{ severity: "desc" }, { createdAt: "desc" }],
       take: 20,
       include: { entry: { select: { departmentId: true } } },
     }),
